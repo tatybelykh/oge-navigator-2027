@@ -23,9 +23,9 @@
   border-radius: var(--radius);
   background: var(--accent-soft);
   color: var(--accent-strong);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
   font-size: 22px;
-  font-weight: 700;
+  font-weight: 650;
   line-height: 0.95;
 }
 
@@ -89,28 +89,12 @@
   z-index: 20;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   min-height: 72px;
   padding: 16px 32px;
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(16px);
-}
-
-.topbar-title {
-  display: grid;
-  gap: 1px;
-}
-
-.topbar-title span {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.topbar-title strong {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 24px;
 }
 
 .icon-button,
@@ -132,6 +116,10 @@
   border: 1px solid var(--border);
   font-size: 22px;
   font-weight: 800;
+}
+
+.menu-button {
+  margin-right: auto;
 }
 
 .theme-toggle {
@@ -190,13 +178,13 @@ p {
 h1,
 h2 {
   color: var(--text);
-  font-family: Georgia, "Times New Roman", serif;
-  font-weight: 700;
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  font-weight: 600;
 }
 
 h1 {
   margin-bottom: 8px;
-  font-size: clamp(40px, 7vw, 68px);
+  font-size: clamp(34px, 5.2vw, 50px);
   line-height: 1;
 }
 
@@ -332,7 +320,7 @@ h2 {
 }
 
 .progress-ring strong {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
   font-size: 42px;
   line-height: 1;
 }
@@ -396,7 +384,7 @@ h2 {
 
 .revision-count strong {
   color: var(--accent-strong);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
   font-size: 72px;
   line-height: 0.9;
 }
@@ -488,10 +476,6 @@ h2 {
     padding: 12px 18px;
   }
 
-  .topbar-title {
-    display: none;
-  }
-
   .main-content {
     padding: 26px 18px 36px;
   }
@@ -522,7 +506,7 @@ h2 {
 
 @media (max-width: 560px) {
   h1 {
-    font-size: 42px;
+    font-size: 34px;
   }
 
   .welcome-text {

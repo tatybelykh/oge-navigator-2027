@@ -21,7 +21,7 @@ export const featureCards = [
   },
   {
     title: 'Практика',
-    meta: 'ФИПИ и наши задания',
+    meta: 'ФИПИ и Extra Practice',
     action: 'Перейти',
     tone: 'blue',
   },

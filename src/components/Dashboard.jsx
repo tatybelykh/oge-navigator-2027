@@ -17,10 +17,6 @@ export function Dashboard({
             Продолжим подготовку к ОГЭ по английскому?
           </p>
         </div>
-        <div className="privacy-note">
-          <span>Privacy-first</span>
-          <strong>Demo data only</strong>
-        </div>
       </section>
 
       <section className="feature-grid" aria-label="Основные разделы">

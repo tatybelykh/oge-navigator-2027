@@ -28,11 +28,6 @@ export function AppShell({
             <span aria-hidden="true">{isMenuOpen ? 'x' : '='}</span>
           </button>
 
-          <div className="topbar-title">
-            <span>OGE English</span>
-            <strong>Dashboard</strong>
-          </div>
-
           <button
             aria-label={themeLabel}
             className="theme-toggle"

@@ -48,12 +48,16 @@ export function SpeakingTask2Trainer({
   const [isStarting, setIsStarting] = useState(false)
   const [isVoiceReady, setIsVoiceReady] = useState(false)
   const [isQuestionPlaybackComplete, setIsQuestionPlaybackComplete] = useState(false)
+  const [showQuestionText, setShowQuestionText] = useState(true)
   const [selectedVoiceURI, setSelectedVoiceURI] = useState(() =>
     localStorageService.getSpeakingVoiceURI(),
   )
   const [voices, setVoices] = useState([])
   const [sessionRecording, setSessionRecording] = useState(null)
+  const [answerTimestamps, setAnswerTimestamps] = useState([])
   const [isRecording, setIsRecording] = useState(false)
+  const audioPlayerRef = useRef(null)
+  const answerTimestampsRef = useRef([])
   const chunksRef = useRef([])
   const discardRecordingRef = useRef(false)
   const recorderRef = useRef(null)
@@ -113,7 +117,68 @@ export function SpeakingTask2Trainer({
     }
     sessionRecordingRef.current = null
     setSessionRecording(null)
+    answerTimestampsRef.current = []
+    setAnswerTimestamps([])
   }, [])
+
+  const getElapsedRecordingSeconds = useCallback(() => {
+    if (!recordingStartedAtRef.current) {
+      return 0
+    }
+
+    return Math.max(0, Math.round((Date.now() - recordingStartedAtRef.current) / 1000))
+  }, [])
+
+  const updateAnswerTimestamps = useCallback((updater) => {
+    const nextTimestamps = updater(answerTimestampsRef.current)
+    answerTimestampsRef.current = nextTimestamps
+    setAnswerTimestamps(nextTimestamps)
+  }, [])
+
+  const markAnswerStart = useCallback(
+    (question, questionIndex) => {
+      const startSeconds = getElapsedRecordingSeconds()
+
+      updateAnswerTimestamps((currentTimestamps) => [
+        ...currentTimestamps.filter((timestamp) => timestamp.questionId !== question.id),
+        {
+          answerEndedAt: null,
+          answerStartedAt: startSeconds,
+          endSeconds: null,
+          questionId: question.id,
+          questionNumber: questionIndex + 1,
+          startSeconds,
+        },
+      ])
+    },
+    [getElapsedRecordingSeconds, updateAnswerTimestamps],
+  )
+
+  const markCurrentAnswerEnd = useCallback(() => {
+    const question = material.questions[state.currentQuestionIndex]
+
+    if (!question) {
+      return
+    }
+
+    const endSeconds = getElapsedRecordingSeconds()
+    updateAnswerTimestamps((currentTimestamps) =>
+      currentTimestamps.map((timestamp) =>
+        timestamp.questionId === question.id && timestamp.endSeconds === null
+          ? {
+              ...timestamp,
+              answerEndedAt: endSeconds,
+              endSeconds: Math.max(endSeconds, timestamp.startSeconds),
+            }
+          : timestamp,
+      ),
+    )
+  }, [
+    getElapsedRecordingSeconds,
+    material.questions,
+    state.currentQuestionIndex,
+    updateAnswerTimestamps,
+  ])
 
   const stopSessionRecording = useCallback(({ discard = false } = {}) => {
     discardRecordingRef.current = discard
@@ -230,10 +295,11 @@ export function SpeakingTask2Trainer({
       }
 
       setIsQuestionPlaybackComplete(false)
+      markAnswerStart(question, questionIndex)
       dispatch({ type: 'QUESTION', index: questionIndex })
       speak(question.text, () => setIsQuestionPlaybackComplete(true))
     },
-    [material.questions, speak, stopSessionRecording],
+    [markAnswerStart, material.questions, speak, stopSessionRecording],
   )
 
   const startAttempt = async () => {
@@ -251,20 +317,29 @@ export function SpeakingTask2Trainer({
   }
 
   const finishAttempt = useCallback(() => {
+    markCurrentAnswerEnd()
     window.speechSynthesis?.cancel()
     stopSessionRecording()
     dispatch({ type: 'COMPLETED' })
     speak(speakingTask2Config.outroText)
-  }, [speak, stopSessionRecording])
+  }, [markCurrentAnswerEnd, speak, stopSessionRecording])
 
   const goToNextQuestion = useCallback(() => {
+    markCurrentAnswerEnd()
+
     if (isLastQuestion) {
       finishAttempt()
       return
     }
 
     startQuestion(state.currentQuestionIndex + 1)
-  }, [finishAttempt, isLastQuestion, startQuestion, state.currentQuestionIndex])
+  }, [
+    finishAttempt,
+    isLastQuestion,
+    markCurrentAnswerEnd,
+    startQuestion,
+    state.currentQuestionIndex,
+  ])
 
   const replayQuestion = () => {
     if (currentQuestion) {
@@ -298,6 +373,15 @@ export function SpeakingTask2Trainer({
     onBackToSets()
   }
 
+  const playAnswerSegment = (startSeconds) => {
+    if (!audioPlayerRef.current) {
+      return
+    }
+
+    audioPlayerRef.current.currentTime = startSeconds
+    audioPlayerRef.current.play()
+  }
+
   if (state.status === 'review') {
     return (
       <TeacherReview
@@ -310,6 +394,7 @@ export function SpeakingTask2Trainer({
           clearSessionRecording()
           dispatch({ type: 'RESET' })
         }}
+        answerTimestamps={answerTimestamps}
         sessionRecording={sessionRecording}
       />
     )
@@ -411,6 +496,16 @@ export function SpeakingTask2Trainer({
           <p className="empty-state">
             После старта сразу начнутся запись, Question 1 и таймер.
           </p>
+          {state.mode === 'practice' && (
+            <label className="checkbox-row">
+              <input
+                checked={showQuestionText}
+                onChange={(event) => setShowQuestionText(event.target.checked)}
+                type="checkbox"
+              />
+              Показывать текст вопроса
+            </label>
+          )}
           <div className="material-actions">
             <button
               className="primary-button"
@@ -441,7 +536,19 @@ export function SpeakingTask2Trainer({
 
           {state.mode === 'practice' && currentQuestion && (
             <>
-              <h2>{currentQuestion.text}</h2>
+              {showQuestionText ? (
+                <h2>{currentQuestion.text}</h2>
+              ) : (
+                <h2 className="hidden-question">Question text is hidden.</h2>
+              )}
+              <label className="checkbox-row">
+                <input
+                  checked={showQuestionText}
+                  onChange={(event) => setShowQuestionText(event.target.checked)}
+                  type="checkbox"
+                />
+                Показывать текст вопроса
+              </label>
               <div className="useful-language">
                 <strong>Useful language</strong>
                 <div className="section-chip-row">
@@ -492,18 +599,25 @@ export function SpeakingTask2Trainer({
           )}
 
           {sessionRecording?.url && state.status === 'completed' && (
-            <div className="audio-review-row">
-              <audio controls src={sessionRecording.url}>
-                <track kind="captions" />
-              </audio>
-              <a
-                className="text-button"
-                download={makeSessionAudioFileName(material, sessionRecording.mimeType)}
-                href={sessionRecording.url}
-              >
-                Скачать общий файл
-              </a>
-            </div>
+            <>
+              <div className="audio-review-row">
+                <audio controls ref={audioPlayerRef} src={sessionRecording.url}>
+                  <track kind="captions" />
+                </audio>
+                <a
+                  className="text-button"
+                  download={makeSessionAudioFileName(material, sessionRecording.mimeType)}
+                  href={sessionRecording.url}
+                >
+                  Скачать общий файл
+                </a>
+              </div>
+              <QuestionReviewList
+                answerTimestamps={answerTimestamps}
+                material={material}
+                onPlayAnswer={playAnswerSegment}
+              />
+            </>
           )}
         </article>
       )}
@@ -517,4 +631,51 @@ function makeSessionAudioFileName(material, mimeType) {
   const safeTitle = material.title.replaceAll(' ', '-')
 
   return `OGE_Family_Task2_${safeTitle}_session_${date}.${extension}`
+}
+
+function QuestionReviewList({ answerTimestamps, material, onPlayAnswer }) {
+  return (
+    <article className="review-card">
+      <div className="panel-heading">
+        <p className="eyebrow">Questions</p>
+        <h2>Questions</h2>
+      </div>
+      <div className="question-review-list">
+        {material.questions.map((question, index) => {
+          const timestamp = answerTimestamps.find(
+            (answerTimestamp) => answerTimestamp.questionId === question.id,
+          )
+          const startSeconds = timestamp?.startSeconds ?? 0
+          const endSeconds = timestamp?.endSeconds ?? startSeconds
+
+          return (
+            <div className="question-review-item" key={question.id}>
+              <div>
+                <strong>Question {index + 1}</strong>
+                <p>{question.text}</p>
+                <span>
+                  Answer: {formatTimestamp(startSeconds)}–{formatTimestamp(endSeconds)}
+                </span>
+              </div>
+              <button
+                className="text-button"
+                onClick={() => onPlayAnswer(startSeconds)}
+                type="button"
+              >
+                ▶ Перейти к ответу
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </article>
+  )
+}
+
+function formatTimestamp(totalSeconds) {
+  const safeSeconds = Math.max(0, totalSeconds)
+  const minutes = Math.floor(safeSeconds / 60)
+  const seconds = safeSeconds % 60
+
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }

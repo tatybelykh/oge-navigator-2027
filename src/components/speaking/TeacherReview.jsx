@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { speakingTask2Config } from '../../data/speaking/task2Config'
 
 const zeroReasons = [
@@ -20,11 +20,13 @@ const selfReviewItems = [
 export function TeacherReview({
   material,
   mode,
+  answerTimestamps = [],
   onAddError,
   onAddRevision,
   onSaveResult,
   sessionRecording,
 }) {
+  const audioPlayerRef = useRef(null)
   const [questionScores, setQuestionScores] = useState(() =>
     material.questions.map((question) => ({
       note: '',
@@ -51,6 +53,15 @@ export function TeacherReview({
     )
   }
 
+  const playAnswerSegment = (startSeconds) => {
+    if (!audioPlayerRef.current) {
+      return
+    }
+
+    audioPlayerRef.current.currentTime = startSeconds
+    audioPlayerRef.current.play()
+  }
+
   return (
     <section className="page-stack">
       <article className="panel">
@@ -62,7 +73,7 @@ export function TeacherReview({
         </div>
         {sessionRecording?.url ? (
           <div className="audio-review-row">
-            <audio controls src={sessionRecording.url}>
+            <audio controls ref={audioPlayerRef} src={sessionRecording.url}>
               <track kind="captions" />
             </audio>
             <a
@@ -98,6 +109,11 @@ export function TeacherReview({
 
       {material.questions.map((question, index) => {
         const questionScore = questionScores[index]
+        const timestamp = answerTimestamps.find(
+          (answerTimestamp) => answerTimestamp.questionId === question.id,
+        )
+        const startSeconds = timestamp?.startSeconds ?? 0
+        const endSeconds = timestamp?.endSeconds ?? startSeconds
 
         return (
           <article className="review-card" key={question.id}>
@@ -108,9 +124,18 @@ export function TeacherReview({
               </span>
             </div>
             <p>{question.text}</p>
-            <p className="empty-state">
-              Ответ оценивается по общей непрерывной записи выше.
-            </p>
+            <div className="audio-review-row">
+              <span>
+                Answer: {formatTimestamp(startSeconds)}–{formatTimestamp(endSeconds)}
+              </span>
+              <button
+                className="text-button"
+                onClick={() => playAnswerSegment(startSeconds)}
+                type="button"
+              >
+                ▶ Перейти к ответу
+              </button>
+            </div>
 
             <div className="score-toggle" aria-label={`Score for question ${index + 1}`}>
               {[0, 1].map((score) => (
@@ -231,6 +256,7 @@ export function TeacherReview({
           onSaveResult({
             material,
             mode,
+            answerTimestamps,
             questionScores,
             selfReview,
             teacherNotes: questionScores.map((questionScore) => ({
@@ -330,4 +356,12 @@ function makeSessionAudioFileName(material, mimeType) {
   const safeTitle = material.title.replaceAll(' ', '-')
 
   return `OGE_Family_Task2_${safeTitle}_session_${date}.${extension}`
+}
+
+function formatTimestamp(totalSeconds) {
+  const safeSeconds = Math.max(0, totalSeconds)
+  const minutes = Math.floor(safeSeconds / 60)
+  const seconds = safeSeconds % 60
+
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }

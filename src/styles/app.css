@@ -1060,6 +1060,39 @@ h2 {
   width: min(100%, 360px);
 }
 
+.question-review-list {
+  display: grid;
+  gap: 10px;
+}
+
+.question-review-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.question-review-item:last-child {
+  border-bottom: 0;
+}
+
+.question-review-item div {
+  display: grid;
+  gap: 4px;
+}
+
+.question-review-item p {
+  margin: 0;
+}
+
+.question-review-item span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 750;
+}
+
 .form-error,
 .status-message {
   margin: 0;

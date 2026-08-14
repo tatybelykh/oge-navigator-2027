@@ -61,6 +61,7 @@ export function useLocalStudentData(studentId) {
   }
 
   const addSpeakingTask2Attempt = ({
+    answerTimestamps,
     material,
     mode,
     questionScores,
@@ -87,6 +88,7 @@ export function useLocalStudentData(studentId) {
       maxScore,
       percentage: maxScore > 0 ? Math.round((score / maxScore) * 100) : 0,
       status: score === maxScore ? 'completed' : 'retry',
+      answerTimestamps,
       questionScores,
       selfReview,
       teacherNotes,

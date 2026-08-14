@@ -10,6 +10,7 @@ import { useTheme } from './hooks/useTheme'
 import { useLocalStudentData } from './hooks/useLocalStudentData'
 import { useStudentProfiles } from './hooks/useStudentProfiles'
 import { FamilyTopicPage } from './pages/FamilyTopicPage'
+import { SpeakingPage } from './pages/SpeakingPage'
 import { TopicsPage } from './pages/TopicsPage'
 import './styles/app.css'
 
@@ -64,6 +65,10 @@ function App() {
               />
             }
             path="/topics/family-relationships"
+          />
+          <Route
+            element={<SpeakingPage progressActions={progressActions} />}
+            path="/speaking"
           />
           <Route element={<Navigate replace to="/" />} path="*" />
         </Routes>

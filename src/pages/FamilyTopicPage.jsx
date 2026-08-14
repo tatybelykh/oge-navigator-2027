@@ -411,13 +411,19 @@ function PracticeCard({ attempts, material, onAddAttempt, onAddRevision }) {
       )}
 
       <div className="material-actions">
-        <button
-          className="primary-button"
-          onClick={() => setIsRecordingResult((current) => !current)}
-          type="button"
-        >
-          Записать результат
-        </button>
+        {material.taskType === 'speaking-task-2' ? (
+          <Link className="primary-link" to={`/speaking?set=${material.id}`}>
+            Начать
+          </Link>
+        ) : (
+          <button
+            className="primary-button"
+            onClick={() => setIsRecordingResult((current) => !current)}
+            type="button"
+          >
+            Записать результат
+          </button>
+        )}
         <button
           className="text-button"
           onClick={() =>

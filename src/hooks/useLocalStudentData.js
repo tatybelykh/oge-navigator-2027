@@ -60,7 +60,54 @@ export function useLocalStudentData(studentId) {
     })
   }
 
-  const addError = ({ correction, inRevision, original, target, type }) => {
+  const addSpeakingTask2Attempt = ({
+    material,
+    mode,
+    questionScores,
+    selfReview,
+    teacherNotes,
+  }) => {
+    const score = questionScores.reduce(
+      (sum, questionScore) => sum + Number(questionScore.score),
+      0,
+    )
+    const maxScore = questionScores.length
+    const attempt = {
+      id: `attempt-${crypto.randomUUID()}`,
+      studentId,
+      materialId: material.id,
+      materialTitle: material.title,
+      materialSourceType: material.sourceType,
+      topicId: material.topicId,
+      taskType: material.taskType,
+      section: 'Speaking',
+      mode,
+      completedAt: new Date().toISOString(),
+      score,
+      maxScore,
+      percentage: maxScore > 0 ? Math.round((score / maxScore) * 100) : 0,
+      status: score === maxScore ? 'completed' : 'retry',
+      questionScores,
+      selfReview,
+      teacherNotes,
+    }
+
+    saveStudentData({
+      ...studentData,
+      attempts: [...studentData.attempts, attempt],
+    })
+  }
+
+  const addError = ({
+    correction,
+    inRevision,
+    materialId,
+    original,
+    questionId,
+    source,
+    target,
+    type,
+  }) => {
     const error = {
       id: `error-${crypto.randomUUID()}`,
       studentId,
@@ -69,6 +116,9 @@ export function useLocalStudentData(studentId) {
       correction,
       type,
       target,
+      source,
+      materialId,
+      questionId,
       createdAt: new Date().toISOString(),
       status: inRevision ? 'Revision' : 'Learning',
       inRevision,
@@ -170,6 +220,7 @@ export function useLocalStudentData(studentId) {
 
   return {
     addAttempt,
+    addSpeakingTask2Attempt,
     addError,
     addRevisionItem,
     deleteError,

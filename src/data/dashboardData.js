@@ -5,7 +5,7 @@ export const navItems = [
   { label: 'Практика', section: true },
   { label: 'ФИПИ задания', child: true },
   { label: 'Extra Practice', child: true },
-  { label: 'Speaking', child: true },
+  { label: 'Speaking', child: true, path: '/speaking' },
   { label: 'Ошибки' },
   { label: 'Revision' },
   { label: 'Прогресс' },

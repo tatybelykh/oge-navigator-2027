@@ -99,6 +99,17 @@ export const localStorageService = {
     })
   },
 
+  getSpeakingVoiceURI() {
+    return this.getSettings().speakingVoiceURI
+  },
+
+  saveSpeakingVoiceURI(speakingVoiceURI) {
+    this.saveSettings({
+      ...this.getSettings(),
+      speakingVoiceURI,
+    })
+  },
+
   getStudents(defaultStudents) {
     const stored = readJson(storageKeys.students, null)
 

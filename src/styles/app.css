@@ -945,6 +945,177 @@ h2 {
   color: var(--warning);
 }
 
+.speaking-trainer,
+.question-stage,
+.review-card,
+.criteria-help,
+.self-review-item {
+  display: grid;
+  gap: 16px;
+}
+
+.source-row,
+.review-card__header,
+.audio-review-row,
+.score-toggle,
+.review-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.mode-card,
+.question-stage,
+.review-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.mode-card {
+  display: grid;
+  gap: 8px;
+  min-height: 150px;
+  padding: 20px;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.mode-card:hover:not(:disabled) {
+  background: var(--surface-soft);
+}
+
+.mode-card:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.mode-card span {
+  color: var(--accent-strong);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.mode-card strong {
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.question-stage,
+.review-card {
+  padding: 22px;
+}
+
+.question-stage__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.speaking-timer {
+  display: grid;
+  place-items: center;
+  width: 104px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  font-size: 44px;
+  font-weight: 650;
+}
+
+.speaking-timer.is-low {
+  background: color-mix(in srgb, var(--warning) 18%, var(--surface));
+  color: var(--warning);
+}
+
+.hidden-question {
+  color: var(--muted);
+}
+
+.useful-language,
+.audio-review-row,
+.criteria-help {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+
+.audio-review-row audio {
+  width: min(100%, 360px);
+}
+
+.form-error,
+.status-message {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--warning) 12%, var(--surface));
+  color: var(--warning);
+  font-weight: 750;
+}
+
+.status-message {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.criteria-help summary {
+  cursor: pointer;
+  color: var(--accent-strong);
+  font-weight: 850;
+}
+
+.criteria-help p,
+.criteria-help small {
+  margin: 0;
+  color: var(--muted);
+}
+
+.review-card__header {
+  justify-content: space-between;
+}
+
+.review-card p {
+  margin: 0;
+}
+
+.compact-field textarea,
+.inline-form textarea {
+  min-height: 82px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  resize: vertical;
+}
+
+.self-review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.self-review-item {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+
+.big-done-button {
+  min-width: 150px;
+}
+
 .source-badge.is-fipi {
   background: var(--blue-soft);
   color: var(--blue);

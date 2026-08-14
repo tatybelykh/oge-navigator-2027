@@ -1,3 +1,5 @@
+import { familyTask2Sets } from './speaking/familyTask2Sets'
+
 export const familyExtraPractice = [
   {
     id: 'extra-chunk-practice-family-core',
@@ -17,8 +19,15 @@ export const familyExtraPractice = [
     difficulty: 'Easy',
     progressSection: 'Speaking',
   },
+  ...familyTask2Sets.map((set) => ({
+    ...set,
+    section: 'Extra Practice',
+    source: 'OGE Navigator',
+    tags: ['family', 'speaking-task-2', 'exam-style'],
+    progressSection: 'Speaking',
+  })),
   {
-    id: 'extra-family-interview',
+    id: 'extra-family-interview-placeholder',
     sourceType: 'extra',
     source: 'OGE Navigator',
     topic: 'family',

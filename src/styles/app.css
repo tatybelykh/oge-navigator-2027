@@ -83,7 +83,15 @@
 }
 
 .nav-item.is-child:hover {
-  color: var(--text);
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.nav-item.is-child.is-active {
+  color: white;
+  font-weight: 750;
+  text-decoration: none;
 }
 
 .content-shell {

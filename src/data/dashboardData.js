@@ -30,6 +30,7 @@ export const featureCards = [
     title: 'Speaking',
     meta: 'Тренировка говорения',
     action: 'Перейти',
+    path: '/speaking',
     tone: 'mint',
   },
 ]

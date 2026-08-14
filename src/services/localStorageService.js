@@ -5,6 +5,7 @@ export const storageKeys = {
   settings: 'ogeNavigator.settings',
   students: 'ogeNavigator.students',
   activeStudentId: 'ogeNavigator.activeStudentId',
+  fipiCatalog: 'ogeNavigator.fipiCatalog',
   studentData: 'ogeNavigator.studentData',
 }
 
@@ -107,6 +108,23 @@ export const localStorageService = {
     this.saveSettings({
       ...this.getSettings(),
       speakingVoiceURI,
+    })
+  },
+
+  getFipiCatalog() {
+    const catalog = readJson(storageKeys.fipiCatalog, { version: STORAGE_VERSION, items: [] })
+
+    if (!catalog || catalog.version !== STORAGE_VERSION || !Array.isArray(catalog.items)) {
+      return []
+    }
+
+    return catalog.items
+  },
+
+  saveFipiCatalog(items) {
+    writeJson(storageKeys.fipiCatalog, {
+      version: STORAGE_VERSION,
+      items,
     })
   },
 

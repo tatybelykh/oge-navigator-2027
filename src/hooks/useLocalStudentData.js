@@ -60,6 +60,50 @@ export function useLocalStudentData(studentId) {
     })
   }
 
+  const addPracticeAttempt = ({
+    answers,
+    material,
+    maxScore,
+    metadata,
+    score,
+    status,
+  }) => {
+    const numericScore = Number(score)
+    const numericMaxScore = Number(maxScore)
+    const attempt = {
+      id: `attempt-${crypto.randomUUID()}`,
+      studentId,
+      materialId: material.id,
+      materialTitle: material.title,
+      materialSourceType: material.sourceType,
+      topicId: material.topicId ?? material.topic ?? 'family',
+      taskType: material.taskType,
+      section: material.progressSection ?? material.section,
+      completedAt: new Date().toISOString(),
+      score: numericScore,
+      maxScore: numericMaxScore,
+      percentage: numericMaxScore > 0 ? Math.round((numericScore / numericMaxScore) * 100) : 0,
+      status,
+      answers,
+      metadata,
+    }
+
+    saveStudentData({
+      ...studentData,
+      attempts: [...studentData.attempts, attempt],
+    })
+  }
+
+  const saveWritingDraft = (materialId, draft) => {
+    saveStudentData({
+      ...studentData,
+      writingDrafts: {
+        ...(studentData.writingDrafts ?? {}),
+        [materialId]: draft,
+      },
+    })
+  }
+
   const addSpeakingTask2Attempt = ({
     answerTimestamps,
     material,
@@ -329,6 +373,7 @@ export function useLocalStudentData(studentId) {
 
   return {
     addAttempt,
+    addPracticeAttempt,
     addSpeakingTask1Attempt,
     addSpeakingTask2Attempt,
     addSpeakingTask3Attempt,
@@ -338,6 +383,7 @@ export function useLocalStudentData(studentId) {
     removeRevisionItem,
     resetProgress,
     saveSpeakingTask1FocusNotes,
+    saveWritingDraft,
     studentData,
     updateChunkStatus,
     updateError,

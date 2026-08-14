@@ -1,26 +1,14 @@
+import { familyContentPackMaterials } from './familyContentPack'
 import { familyTask1Texts } from './speaking/familyTask1Texts'
 import { familyTask2Sets } from './speaking/familyTask2Sets'
 import { familyTask3Sets } from './speaking/familyTask3Sets'
 
 export const familyExtraPractice = [
-  {
-    id: 'extra-chunk-practice-family-core',
-    sourceType: 'extra',
-    source: 'OGE Navigator',
-    topic: 'family',
-    subtopic: 'relationships',
-    section: 'Extra Practice',
-    taskType: 'Speaking',
-    title: 'Chunk Practice',
-    tags: ['family', 'chunks', 'speaking'],
-    targetChunks: [
-      'get on well with',
-      'have a lot in common',
-      'be close to',
-    ],
-    difficulty: 'Easy',
-    progressSection: 'Speaking',
-  },
+  ...familyContentPackMaterials.map((material) => ({
+    ...material,
+    tags: ['family', material.taskType, 'original-practice'],
+    progressSection: material.section === 'Chunks' ? 'Speaking' : material.section,
+  })),
   ...familyTask1Texts.map((text) => ({
     ...text,
     section: 'Extra Practice',
@@ -42,46 +30,4 @@ export const familyExtraPractice = [
     tags: ['family', 'speaking-task-3', 'exam-style'],
     progressSection: 'Speaking',
   })),
-  {
-    id: 'extra-family-interview-placeholder',
-    sourceType: 'extra',
-    source: 'OGE Navigator',
-    topic: 'family',
-    subtopic: 'questions',
-    section: 'Extra Practice',
-    taskType: 'Speaking Task 2',
-    title: 'Family Interview',
-    tags: ['family', 'speaking-task-2'],
-    targetChunks: ['4 target chunks'],
-    difficulty: 'Medium',
-    progressSection: 'Speaking',
-  },
-  {
-    id: 'extra-relationships-reading',
-    sourceType: 'extra',
-    source: 'OGE Navigator',
-    topic: 'family',
-    subtopic: 'relationships',
-    section: 'Extra Practice',
-    taskType: 'Reading',
-    title: 'Relationships Reading',
-    tags: ['family', 'reading'],
-    targetChunks: ['support each other', 'fall out with somebody'],
-    difficulty: 'Medium',
-    progressSection: 'Reading',
-  },
-  {
-    id: 'extra-email-about-family',
-    sourceType: 'extra',
-    source: 'OGE Navigator',
-    topic: 'family',
-    subtopic: 'writing',
-    section: 'Extra Practice',
-    taskType: 'Writing',
-    title: 'Email about family',
-    tags: ['family', 'writing'],
-    targetChunks: ['keep in touch with somebody'],
-    difficulty: 'Hard',
-    progressSection: 'Writing',
-  },
 ]

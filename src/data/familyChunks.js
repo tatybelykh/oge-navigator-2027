@@ -1,62 +1,45 @@
-export const familyChunks = [
-  {
-    id: 'chunk-get-on-well',
-    chunk: 'get on well with somebody',
-    definition: 'Placeholder: describe a friendly relationship.',
-  },
-  {
-    id: 'chunk-common',
-    chunk: 'have a lot in common',
-    definition: 'Placeholder: talk about shared interests.',
-  },
-  {
-    id: 'chunk-close',
-    chunk: 'be close to somebody',
-    definition: 'Placeholder: describe emotional connection.',
-  },
-  {
-    id: 'chunk-time',
-    chunk: 'spend time together',
-    definition: 'Placeholder: say what people do together.',
-  },
-  {
-    id: 'chunk-fall-out',
-    chunk: 'fall out with somebody',
-    definition: 'Placeholder: describe a conflict.',
-  },
-  {
-    id: 'chunk-argue',
-    chunk: 'argue about something',
-    definition: 'Placeholder: name a reason for disagreement.',
-  },
-  {
-    id: 'chunk-support',
-    chunk: 'support each other',
-    definition: 'Placeholder: explain help in a relationship.',
-  },
-  {
-    id: 'chunk-get-along',
-    chunk: 'get along with somebody',
-    definition: 'Placeholder: describe a peaceful relationship.',
-  },
-  {
-    id: 'chunk-good-relationship',
-    chunk: 'have a good relationship with',
-    definition: 'Placeholder: describe family or friends.',
-  },
-  {
-    id: 'chunk-advice',
-    chunk: 'turn to somebody for advice',
-    definition: 'Placeholder: ask a trusted person for help.',
-  },
-  {
-    id: 'chunk-care',
-    chunk: 'take care of somebody',
-    definition: 'Placeholder: describe practical support.',
-  },
-  {
-    id: 'chunk-touch',
-    chunk: 'keep in touch with somebody',
-    definition: 'Placeholder: stay connected.',
-  },
+export const familySubtopics = [
+  { id: 'relationships', label: 'Relationships', title: 'Family members & relationships' },
+  { id: 'time-together', label: 'Time together', title: 'Spending time together' },
+  { id: 'conflicts', label: 'Conflicts', title: 'Arguments & conflicts' },
+  { id: 'support', label: 'Support', title: 'Support & advice' },
+  { id: 'household-duties', label: 'Household duties', title: 'Household duties' },
 ]
+
+const chunkData = [
+  ['chunk-get-on-well', 'get on well with somebody', 'have a friendly relationship with someone', 'I get on well with my older sister.', ['relationships'], ['relationship', 'speaking']],
+  ['chunk-be-close-to', 'be close to somebody', 'have a strong and warm relationship with someone', "I'm very close to my grandmother.", ['relationships'], ['relationship', 'feelings']],
+  ['chunk-have-a-lot-in-common', 'have a lot in common', 'share similar interests, ideas or experiences', 'My brother and I have a lot in common.', ['relationships', 'time-together'], ['relationship', 'interests']],
+  ['chunk-spend-time-together', 'spend time together', 'do things together', 'We usually spend time together at weekends.', ['time-together'], ['activities', 'speaking']],
+  ['chunk-spend-quality-time', 'spend quality time with somebody', 'spend meaningful and enjoyable time with someone', 'I enjoy spending quality time with my family.', ['time-together'], ['activities', 'relationships']],
+  ['chunk-keep-in-touch', 'keep in touch with somebody', 'continue communicating with someone', 'I keep in touch with my cousins online.', ['relationships', 'support'], ['communication']],
+  ['chunk-good-relationship', 'have a good relationship with somebody', 'have a positive relationship with someone', 'I have a good relationship with my parents.', ['relationships'], ['relationship']],
+  ['chunk-fall-out', 'fall out with somebody', 'have an argument and stop being friendly for a while', 'I sometimes fall out with my brother over small things.', ['conflicts'], ['conflict']],
+  ['chunk-argue-about', 'argue about something', 'disagree angrily about something', 'We sometimes argue about household chores.', ['conflicts', 'household-duties'], ['conflict']],
+  ['chunk-make-up', 'make up with somebody', 'become friendly again after an argument', 'We usually make up quickly after an argument.', ['conflicts', 'relationships'], ['conflict', 'relationship']],
+  ['chunk-have-an-argument', 'have an argument with somebody', 'have a disagreement with someone', 'I had an argument with my sister yesterday.', ['conflicts'], ['conflict']],
+  ['chunk-solve-a-problem', 'solve a problem', 'find a way to deal with a problem', 'We try to solve problems calmly.', ['conflicts', 'support'], ['problem-solving']],
+  ['chunk-respect-opinions', "respect each other's opinions", 'accept that another person may think differently', "Family members should respect each other's opinions.", ['relationships', 'conflicts'], ['values']],
+  ['chunk-support-each-other', 'support each other', 'help and encourage one another', 'We always support each other when something goes wrong.', ['support', 'relationships'], ['support']],
+  ['chunk-turn-to-for-advice', 'turn to somebody for advice', 'ask someone you trust to help you decide what to do', 'I usually turn to my mum for advice.', ['support'], ['advice']],
+  ['chunk-give-advice', 'give somebody advice', 'suggest what someone should do', 'My parents often give me useful advice.', ['support'], ['advice']],
+  ['chunk-trust', 'trust somebody', 'believe that someone is honest and reliable', 'I trust my best friend completely.', ['relationships', 'support'], ['values']],
+  ['chunk-rely-on', 'rely on somebody', 'depend on someone because you know they will help', 'I know I can rely on my family.', ['support'], ['support']],
+  ['chunk-take-care', 'take care of somebody', 'look after someone and help them', 'My grandparents take care of my younger cousin.', ['support', 'household-duties'], ['care']],
+  ['chunk-help-around-house', 'help around the house', 'help with jobs at home', 'I help around the house every day.', ['household-duties'], ['chores']],
+  ['chunk-do-household-chores', 'do household chores', 'do regular jobs such as cleaning or washing up', 'Everyone in our family does household chores.', ['household-duties'], ['chores']],
+  ['chunk-share-household-duties', 'share household duties', 'divide jobs at home between several people', 'We share household duties fairly.', ['household-duties'], ['chores']],
+  ['chunk-responsible-for', 'be responsible for something', 'have a duty to do something', "I'm responsible for taking out the rubbish.", ['household-duties'], ['responsibility']],
+  ['chunk-spend-time-doing', 'spend time doing something', 'use time for a particular activity', 'We spend a lot of time talking and watching films.', ['time-together'], ['activities']],
+]
+
+export const familyChunks = chunkData.map(([id, text, meaning, example, subtopics, tags]) => ({
+  id,
+  text,
+  chunk: text,
+  meaning,
+  definition: meaning,
+  example,
+  subtopics,
+  tags,
+}))

@@ -1,12 +1,24 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { familyChunks } from '../data/familyChunks'
+import { FamilyPracticeTask } from '../components/family/FamilyPracticeTasks'
+import {
+  familyChunks,
+  familySubtopics,
+} from '../data/familyChunks'
+import {
+  familySectionFilters,
+} from '../data/familyContentPack'
+import {
+  fipiSectionFilters,
+  officialFipiResources,
+} from '../data/fipiResources'
 import {
   examSkillSections,
   familyExamPractice,
 } from '../data/familyExamPractice'
 import { familyExtraPractice } from '../data/familyExtraPractice'
 import { getTopicBySlug } from '../data/topics'
+import { localStorageService } from '../services/localStorageService'
 import {
   calculateFamilyProgress,
   getAttemptsForMaterial,
@@ -18,11 +30,16 @@ const tabs = [
   'Chunks',
   'Exam Practice',
   'Extra Practice',
+  'FIPI Practice',
   'Ошибки',
   'Revision',
 ]
 
 const chunkFilters = ['All', 'New', 'Learning', 'With help', 'Active']
+const subtopicFilters = [
+  { id: 'all', label: 'All' },
+  ...familySubtopics.map((subtopic) => ({ id: subtopic.id, label: subtopic.label })),
+]
 const chunkStatuses = ['New', 'Learning', 'With help', 'Active']
 const errorTypes = [
   'Grammar',
@@ -48,6 +65,10 @@ export function FamilyTopicPage({ activeStudentId, progressActions }) {
   })
   const [activeTab, setActiveTab] = useState('Обзор')
   const [chunkFilter, setChunkFilter] = useState('All')
+  const [subtopicFilter, setSubtopicFilter] = useState('all')
+  const [extraPracticeFilter, setExtraPracticeFilter] = useState('All')
+  const [fipiFilter, setFipiFilter] = useState('All')
+  const [fipiCatalog, setFipiCatalog] = useState(() => localStorageService.getFipiCatalog())
 
   const chunksWithStatus = useMemo(
     () =>
@@ -60,12 +81,19 @@ export function FamilyTopicPage({ activeStudentId, progressActions }) {
   )
 
   const filteredChunks = useMemo(() => {
-    if (chunkFilter === 'All') {
-      return chunksWithStatus
-    }
+    return chunksWithStatus.filter((chunk) => {
+      const matchesStatus = chunkFilter === 'All' || chunk.status === chunkFilter
+      const matchesSubtopic =
+        subtopicFilter === 'all' || chunk.subtopics.includes(subtopicFilter)
 
-    return chunksWithStatus.filter((chunk) => chunk.status === chunkFilter)
-  }, [chunkFilter, chunksWithStatus])
+      return matchesStatus && matchesSubtopic
+    })
+  }, [chunkFilter, chunksWithStatus, subtopicFilter])
+
+  const saveFipiCatalog = (items) => {
+    setFipiCatalog(items)
+    localStorageService.saveFipiCatalog(items)
+  }
 
   return (
     <section className="page-stack">
@@ -118,6 +146,8 @@ export function FamilyTopicPage({ activeStudentId, progressActions }) {
           onAddRevision={progressActions.addRevisionItem}
           onFilterChange={setChunkFilter}
           onStatusChange={progressActions.updateChunkStatus}
+          onSubtopicFilterChange={setSubtopicFilter}
+          subtopicFilter={subtopicFilter}
         />
       )}
       {activeTab === 'Exam Practice' && (
@@ -133,8 +163,24 @@ export function FamilyTopicPage({ activeStudentId, progressActions }) {
       {activeTab === 'Extra Practice' && (
         <PracticeTab
           materials={familyExtraPractice}
+          onAddError={progressActions.addError}
+          onAddAttempt={progressActions.addAttempt}
+          onAddPracticeAttempt={progressActions.addPracticeAttempt}
+          onAddRevision={progressActions.addRevisionItem}
+          onFilterChange={setExtraPracticeFilter}
+          onSaveWritingDraft={progressActions.saveWritingDraft}
+          sectionFilter={extraPracticeFilter}
+          studentData={studentData}
+        />
+      )}
+      {activeTab === 'FIPI Practice' && (
+        <FipiPracticeTab
+          catalog={fipiCatalog}
+          filter={fipiFilter}
           onAddAttempt={progressActions.addAttempt}
           onAddRevision={progressActions.addRevisionItem}
+          onFilterChange={setFipiFilter}
+          onSaveCatalog={saveFipiCatalog}
           studentData={studentData}
         />
       )}
@@ -229,6 +275,29 @@ function OverviewTab({ progress, studentData }) {
           </p>
         )}
       </article>
+
+      <article className="panel learning-path-panel">
+        <div className="panel-heading">
+          <p className="eyebrow">Путь по теме</p>
+          <h2>Family learning path</h2>
+        </div>
+        <div className="learning-path">
+          {[
+            ['Шаг 1', 'Chunks', progress.categories[0].value],
+            ['Шаг 2', 'Reading', progress.skills.find((skill) => skill.label === 'Reading')?.value ?? 0],
+            ['Шаг 3', 'Grammar & Vocabulary', progress.skills.find((skill) => skill.label === 'Grammar & Vocabulary')?.value ?? 0],
+            ['Шаг 4', 'Writing', progress.skills.find((skill) => skill.label === 'Writing')?.value ?? 0],
+            ['Шаг 5', 'Speaking', progress.skills.find((skill) => skill.label === 'Speaking')?.value ?? 0],
+            ['Шаг 6', 'Revision', progress.categories[4].value],
+          ].map(([step, label, value]) => (
+            <div className="learning-step" key={label}>
+              <span>{step}</span>
+              <strong>{label}</strong>
+              <ProgressRow label="Progress" value={value} />
+            </div>
+          ))}
+        </div>
+      </article>
     </div>
   )
 }
@@ -253,7 +322,11 @@ function ChunksTab({
   onAddRevision,
   onFilterChange,
   onStatusChange,
+  onSubtopicFilterChange,
+  subtopicFilter,
 }) {
+  const [showExamples, setShowExamples] = useState(true)
+
   return (
     <article className="panel">
       <div className="panel-heading">
@@ -272,13 +345,41 @@ function ChunksTab({
           </button>
         ))}
       </div>
+      <div className="filter-row" aria-label="Фильтр subtopic">
+        {subtopicFilters.map((filter) => (
+          <button
+            className={`filter-button ${subtopicFilter === filter.id ? 'is-active' : ''}`}
+            key={filter.id}
+            onClick={() => onSubtopicFilterChange(filter.id)}
+            type="button"
+          >
+            {filter.label}
+          </button>
+        ))}
+      </div>
+      <label className="checkbox-row">
+        <input
+          checked={showExamples}
+          onChange={(event) => setShowExamples(event.target.checked)}
+          type="checkbox"
+        />
+        Show examples
+      </label>
 
       <div className="material-grid">
         {chunks.map((chunk) => (
           <article className="material-card" key={chunk.id}>
             <span className="status-pill status-started">{chunk.status}</span>
-            <h2>{chunk.chunk}</h2>
-            <p>{chunk.definition}</p>
+            <h2>{chunk.text}</h2>
+            <p>{chunk.meaning}</p>
+            {showExamples && <p className="empty-state">{chunk.example}</p>}
+            <div className="section-chip-row">
+              {chunk.subtopics.map((subtopic) => (
+                <span className="section-chip" key={subtopic}>
+                  {familySubtopics.find((item) => item.id === subtopic)?.label ?? subtopic}
+                </span>
+              ))}
+            </div>
             <label className="compact-field">
               Статус
               <select
@@ -314,12 +415,33 @@ function ChunksTab({
 
 function PracticeTab({
   materials,
+  onAddError,
   onAddAttempt,
+  onAddPracticeAttempt,
   onAddRevision,
+  onFilterChange,
+  onSaveWritingDraft,
+  sectionFilter = 'All',
   studentData,
   title,
   withSections = false,
 }) {
+  const filteredMaterials = materials.filter((material) => {
+    if (sectionFilter === 'All') {
+      return true
+    }
+
+    if (sectionFilter === 'Speaking') {
+      return String(material.taskType).startsWith('speaking-') || material.section === 'Speaking'
+    }
+
+    if (sectionFilter === 'Chunks') {
+      return material.section === 'Chunks'
+    }
+
+    return material.section === sectionFilter || material.progressSection === sectionFilter
+  })
+
   return (
     <div className="page-stack">
       {withSections && (
@@ -338,14 +460,33 @@ function PracticeTab({
         </article>
       )}
 
+      {onFilterChange && (
+        <div className="filter-row" aria-label="Extra Practice filters">
+          {familySectionFilters.map((filter) => (
+            <button
+              className={`filter-button ${sectionFilter === filter ? 'is-active' : ''}`}
+              key={filter}
+              onClick={() => onFilterChange(filter)}
+              type="button"
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="material-grid">
-        {materials.map((material) => (
+        {filteredMaterials.map((material) => (
           <PracticeCard
             attempts={getAttemptsForMaterial(studentData.attempts, material.id)}
+            draft={studentData.writingDrafts?.[material.id]}
             key={material.id}
             material={material}
+            onAddError={onAddError}
             onAddAttempt={onAddAttempt}
+            onAddPracticeAttempt={onAddPracticeAttempt}
             onAddRevision={onAddRevision}
+            onSaveWritingDraft={onSaveWritingDraft}
           />
         ))}
       </div>
@@ -353,17 +494,31 @@ function PracticeTab({
   )
 }
 
-function PracticeCard({ attempts, material, onAddAttempt, onAddRevision }) {
+function PracticeCard({
+  attempts,
+  draft,
+  material,
+  onAddError,
+  onAddAttempt,
+  onAddPracticeAttempt,
+  onAddRevision,
+  onSaveWritingDraft,
+}) {
   const [isRecordingResult, setIsRecordingResult] = useState(false)
+  const [isTaskOpen, setIsTaskOpen] = useState(false)
   const latestAttempt = getLatestAttemptByMaterial(attempts, material.id)
   const isFipi = material.sourceType === 'fipi'
+  const isSpeakingTask = ['speaking-task-1', 'speaking-task-2', 'speaking-task-3'].includes(material.taskType)
+  const isInteractiveTask = Boolean(onAddPracticeAttempt) && !isSpeakingTask
 
   return (
     <article className="material-card">
       <span className={`source-badge ${isFipi ? 'is-fipi' : 'is-extra'}`}>
         {isFipi ? 'FIPI' : 'Extra Practice'}
       </span>
+      {!isFipi && <span className="section-chip">Original practice / OGE Navigator</span>}
       <h2>{material.title}</h2>
+      {material.instructions && <p>{material.instructions}</p>}
       <dl className="material-meta">
         <div>
           <dt>Section</dt>
@@ -413,8 +568,12 @@ function PracticeCard({ attempts, material, onAddAttempt, onAddRevision }) {
       )}
 
       <div className="material-actions">
-        {['speaking-task-1', 'speaking-task-2', 'speaking-task-3'].includes(material.taskType) ? (
+        {isSpeakingTask ? (
           <SpeakingPracticeLink material={material} />
+        ) : isInteractiveTask ? (
+          <button className="primary-button" onClick={() => setIsTaskOpen((current) => !current)} type="button">
+            {isTaskOpen ? 'Close task' : 'Start'}
+          </button>
         ) : (
           <button
             className="primary-button"
@@ -438,6 +597,17 @@ function PracticeCard({ attempts, material, onAddAttempt, onAddRevision }) {
           Повторить позже
         </button>
       </div>
+
+      {isTaskOpen && (
+        <FamilyPracticeTask
+          draft={draft}
+          material={material}
+          onAddAttempt={onAddPracticeAttempt}
+          onAddError={onAddError}
+          onCancel={() => setIsTaskOpen(false)}
+          onSaveDraft={onSaveWritingDraft}
+        />
+      )}
 
       {isRecordingResult && (
         <AttemptForm
@@ -465,6 +635,245 @@ function SpeakingPracticeLink({ material }) {
     <Link className="primary-link" to={`/speaking?${taskSearch}set=${material.id}`}>
       Начать
     </Link>
+  )
+}
+
+function FipiPracticeTab({
+  catalog,
+  filter,
+  onAddAttempt,
+  onAddRevision,
+  onFilterChange,
+  onSaveCatalog,
+  studentData,
+}) {
+  const [isAdding, setIsAdding] = useState(false)
+  const filteredCatalog = catalog.filter((task) => {
+    if (filter === 'All') {
+      return true
+    }
+
+    if (filter === 'Speaking') {
+      return task.section.startsWith('Speaking')
+    }
+
+    return task.section === filter
+  })
+
+  const saveTask = (task) => {
+    const nextTask = {
+      ...task,
+      id: task.id ?? `fipi-local-${crypto.randomUUID()}`,
+      sourceType: 'fipi',
+      topicId: 'family',
+    }
+    const nextCatalog = catalog.some((item) => item.id === nextTask.id)
+      ? catalog.map((item) => (item.id === nextTask.id ? nextTask : item))
+      : [...catalog, nextTask]
+    onSaveCatalog(nextCatalog)
+  }
+
+  const deleteTask = (taskId) => {
+    if (window.confirm('Удалить локальную ссылку ФИПИ?')) {
+      onSaveCatalog(catalog.filter((task) => task.id !== taskId))
+    }
+  }
+
+  return (
+    <div className="page-stack">
+      <article className="panel">
+        <div className="panel-heading">
+          <p className="eyebrow">FIPI Practice</p>
+          <h2>Official OGE 2026 section resources</h2>
+        </div>
+        <div className="material-grid">
+          {officialFipiResources.map((resource) => (
+            <article className="material-card" key={resource.id}>
+              <span className="source-badge is-fipi">Official FIPI</span>
+              <span className="section-chip">{resource.year}</span>
+              <h2>{resource.section}</h2>
+              <p>Official external source</p>
+              <a className="text-button" href={resource.url} rel="noopener noreferrer" target="_blank">
+                Open source ↗
+              </a>
+            </article>
+          ))}
+        </div>
+      </article>
+
+      <article className="panel">
+        <div className="panel-heading">
+          <p className="eyebrow">Family-tagged FIPI tasks</p>
+          <h2>Local teacher catalog</h2>
+        </div>
+        <div className="filter-row" aria-label="FIPI Practice filters">
+          {fipiSectionFilters.map((item) => (
+            <button
+              className={`filter-button ${filter === item ? 'is-active' : ''}`}
+              key={item}
+              onClick={() => onFilterChange(item)}
+              type="button"
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+        <button className="primary-button" onClick={() => setIsAdding(true)} type="button">
+          + Добавить задание ФИПИ
+        </button>
+        {isAdding && (
+          <FipiTaskForm
+            onCancel={() => setIsAdding(false)}
+            onSave={(task) => {
+              saveTask(task)
+              setIsAdding(false)
+            }}
+          />
+        )}
+      </article>
+
+      {filteredCatalog.length === 0 ? (
+        <article className="panel">
+          <p className="empty-state">
+            Пока здесь нет отобранных заданий ФИПИ по этой теме. Добавьте ссылку, когда найдёте подходящее задание в открытом банке.
+          </p>
+          <button className="primary-button" onClick={() => setIsAdding(true)} type="button">
+            + Добавить задание ФИПИ
+          </button>
+        </article>
+      ) : (
+        <div className="material-grid">
+          {filteredCatalog.map((task) => (
+            <FipiTaskCard
+              attempts={getAttemptsForMaterial(studentData.attempts, task.id)}
+              key={task.id}
+              onAddAttempt={onAddAttempt}
+              onAddRevision={onAddRevision}
+              onDelete={() => deleteTask(task.id)}
+              onSave={saveTask}
+              task={task}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function FipiTaskCard({ attempts, onAddAttempt, onAddRevision, onDelete, onSave, task }) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [isRecordingResult, setIsRecordingResult] = useState(false)
+  const latestAttempt = attempts[0]
+  const material = {
+    ...task,
+    difficulty: 'Official external source',
+    progressSection: task.section.startsWith('Speaking') ? 'Speaking' : task.section,
+    sourceType: 'fipi',
+    title: task.title,
+    topic: 'family',
+  }
+
+  if (isEditing) {
+    return (
+      <article className="material-card">
+        <FipiTaskForm
+          task={task}
+          onCancel={() => setIsEditing(false)}
+          onSave={(nextTask) => {
+            onSave(nextTask)
+            setIsEditing(false)
+          }}
+        />
+      </article>
+    )
+  }
+
+  return (
+    <article className="material-card">
+      <span className="source-badge is-fipi">FIPI</span>
+      <span className="section-chip">Official external source</span>
+      <h2>{task.title}</h2>
+      <dl className="material-meta">
+        <div><dt>Task ID</dt><dd>{task.taskNumber}</dd></div>
+        <div><dt>Section</dt><dd>{task.section}</dd></div>
+        <div><dt>Subtopic</dt><dd>{task.subtopic}</dd></div>
+        <div><dt>Teacher note</dt><dd>{task.teacherNote || '—'}</dd></div>
+      </dl>
+      {latestAttempt && (
+        <div className="attempt-summary">
+          <strong>Последняя попытка: {latestAttempt.score}/{latestAttempt.maxScore}</strong>
+          <span>{latestAttempt.status} · {attempts.length} попыток</span>
+        </div>
+      )}
+      <div className="material-actions">
+        <a className="text-button" href={task.url} rel="noopener noreferrer" target="_blank">Открыть на ФИПИ ↗</a>
+        <button className="primary-button" onClick={() => setIsRecordingResult((current) => !current)} type="button">Записать результат</button>
+        <button className="text-button" onClick={() => onAddRevision({ sourceId: task.id, sourceType: 'FIPI', title: task.title })} type="button">Повторить позже</button>
+        <button className="text-button" onClick={() => setIsEditing(true)} type="button">Редактировать</button>
+        <button className="text-button danger-button" onClick={onDelete} type="button">Удалить</button>
+      </div>
+      {isRecordingResult && (
+        <AttemptForm
+          material={material}
+          onCancel={() => setIsRecordingResult(false)}
+          onSave={(attempt) => {
+            onAddAttempt(attempt)
+            setIsRecordingResult(false)
+          }}
+        />
+      )}
+    </article>
+  )
+}
+
+function FipiTaskForm({ onCancel, onSave, task }) {
+  const [taskNumber, setTaskNumber] = useState(task?.taskNumber ?? '')
+  const [title, setTitle] = useState(task?.title ?? '')
+  const [section, setSection] = useState(task?.section ?? 'Reading')
+  const [taskType, setTaskType] = useState(task?.taskType ?? 'Reading')
+  const [url, setUrl] = useState(task?.url ?? '')
+  const [subtopic, setSubtopic] = useState(task?.subtopic ?? 'Relationships')
+  const [teacherNote, setTeacherNote] = useState(task?.teacherNote ?? '')
+
+  return (
+    <form
+      className="inline-form"
+      onSubmit={(event) => {
+        event.preventDefault()
+        onSave({
+          id: task?.id,
+          section,
+          subtopic,
+          taskNumber,
+          taskType,
+          teacherNote,
+          title,
+          url,
+        })
+      }}
+    >
+      <label className="compact-field">Task number / ID<input onChange={(event) => setTaskNumber(event.target.value)} required value={taskNumber} /></label>
+      <label className="compact-field">Title<input onChange={(event) => setTitle(event.target.value)} required value={title} /></label>
+      <label className="compact-field">
+        Section
+        <select onChange={(event) => setSection(event.target.value)} value={section}>
+          {['Listening', 'Reading', 'Grammar & Vocabulary', 'Writing', 'Speaking Task 1', 'Speaking Task 2', 'Speaking Task 3'].map((item) => <option key={item}>{item}</option>)}
+        </select>
+      </label>
+      <label className="compact-field">Task type<input onChange={(event) => setTaskType(event.target.value)} value={taskType} /></label>
+      <label className="compact-field">URL<input onChange={(event) => setUrl(event.target.value)} required type="url" value={url} /></label>
+      <label className="compact-field">
+        Subtopic
+        <select onChange={(event) => setSubtopic(event.target.value)} value={subtopic}>
+          {subtopicFilters.filter((item) => item.id !== 'all').map((item) => <option key={item.id}>{item.label}</option>)}
+        </select>
+      </label>
+      <label className="compact-field">Teacher note<textarea onChange={(event) => setTeacherNote(event.target.value)} value={teacherNote} /></label>
+      <div className="profile-form-actions">
+        <button className="primary-button" type="submit">Сохранить</button>
+        <button className="text-button" onClick={onCancel} type="button">Отмена</button>
+      </div>
+    </form>
   )
 }
 

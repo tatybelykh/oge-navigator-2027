@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
+import { getTopicStudentProgress } from '../data/topicStudentProgress'
 import { topics } from '../data/topics'
 
-export function TopicsPage() {
+export function TopicsPage({ activeStudentId }) {
   return (
     <section className="page-stack">
       <header className="page-header">
@@ -15,6 +16,7 @@ export function TopicsPage() {
       <div className="topics-grid" aria-label="Список тем">
         {topics.map((topic) => {
           const isFamily = topic.slug === 'family-relationships'
+          const topicState = getTopicStudentProgress(activeStudentId, topic.id)
 
           return (
             <article
@@ -25,8 +27,8 @@ export function TopicsPage() {
                 <span className="topic-icon" aria-hidden="true">
                   {topic.icon}
                 </span>
-                <span className={`status-pill status-${topic.statusType}`}>
-                  {topic.status}
+                <span className={`status-pill status-${topicState.statusType}`}>
+                  {topicState.status}
                 </span>
               </div>
 
@@ -38,10 +40,10 @@ export function TopicsPage() {
               <div>
                 <div className="topic-progress">
                   <span>Progress</span>
-                  <strong>{topic.progress}%</strong>
+                  <strong>{topicState.progress}%</strong>
                 </div>
                 <div className="track" aria-hidden="true">
-                  <span style={{ width: `${topic.progress}%` }} />
+                  <span style={{ width: `${topicState.progress}%` }} />
                 </div>
               </div>
 

@@ -1,18 +1,12 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { familyChunks } from '../data/familyChunks'
-import { familyErrors } from '../data/familyErrors'
 import {
   examSkillSections,
   familyExamPractice,
 } from '../data/familyExamPractice'
 import { familyExtraPractice } from '../data/familyExtraPractice'
-import {
-  familyActivity,
-  familyNextSteps,
-  familySkillProgress,
-} from '../data/familyOverview'
-import { familyRevision } from '../data/familyRevision'
+import { getFamilyStudentData } from '../data/familyStudentData'
 import { getTopicBySlug } from '../data/topics'
 
 const tabs = [
@@ -26,18 +20,35 @@ const tabs = [
 
 const chunkFilters = ['All', 'New', 'Learning', 'Active']
 
-export function FamilyTopicPage() {
+export function FamilyTopicPage({ activeStudentId }) {
   const topic = getTopicBySlug('family-relationships')
+  const studentData = getFamilyStudentData(activeStudentId)
   const [activeTab, setActiveTab] = useState('Обзор')
   const [chunkFilter, setChunkFilter] = useState('All')
 
+  const chunksWithStatus = useMemo(
+    () =>
+      familyChunks.map((chunk) => {
+        const progress = studentData.chunkProgress.find(
+          (item) => item.chunkId === chunk.id,
+        )
+
+        return {
+          ...chunk,
+          status: progress?.status ?? 'New',
+          studentId: progress?.studentId ?? activeStudentId,
+        }
+      }),
+    [activeStudentId, studentData.chunkProgress],
+  )
+
   const filteredChunks = useMemo(() => {
     if (chunkFilter === 'All') {
-      return familyChunks
+      return chunksWithStatus
     }
 
-    return familyChunks.filter((chunk) => chunk.status === chunkFilter)
-  }, [chunkFilter])
+    return chunksWithStatus.filter((chunk) => chunk.status === chunkFilter)
+  }, [chunkFilter, chunksWithStatus])
 
   return (
     <section className="page-stack">
@@ -52,17 +63,17 @@ export function FamilyTopicPage() {
         </div>
 
         <div className="topic-summary">
-          <strong>{topic.progress}%</strong>
+          <strong>{studentData.topicProgress.value}%</strong>
           <span>общий прогресс</span>
         </div>
       </header>
 
       <div className="stats-grid">
-        <StatCard label="Chunks" value={topic.stats.chunks} />
-        <StatCard label="Exam Practice" value={topic.stats.examPractice} />
-        <StatCard label="Extra Practice" value={topic.stats.extraPractice} />
-        <StatCard label="Errors" value={topic.stats.errors} />
-        <StatCard label="Revision" value={topic.stats.revision} />
+        <StatCard label="Chunks" value={studentData.stats.chunks} />
+        <StatCard label="Exam Practice" value={studentData.stats.examPractice} />
+        <StatCard label="Extra Practice" value={studentData.stats.extraPractice} />
+        <StatCard label="Errors" value={studentData.stats.errors} />
+        <StatCard label="Revision" value={studentData.stats.revision} />
       </div>
 
       <div className="topic-tabs" role="tablist" aria-label="Разделы темы">
@@ -80,7 +91,7 @@ export function FamilyTopicPage() {
         ))}
       </div>
 
-      {activeTab === 'Обзор' && <OverviewTab />}
+      {activeTab === 'Обзор' && <OverviewTab studentData={studentData} />}
       {activeTab === 'Chunks' && (
         <ChunksTab
           chunkFilter={chunkFilter}
@@ -90,8 +101,10 @@ export function FamilyTopicPage() {
       )}
       {activeTab === 'Exam Practice' && <ExamPracticeTab />}
       {activeTab === 'Extra Practice' && <ExtraPracticeTab />}
-      {activeTab === 'Ошибки' && <ErrorsTab />}
-      {activeTab === 'Revision' && <RevisionTab />}
+      {activeTab === 'Ошибки' && <ErrorsTab errors={studentData.errors} />}
+      {activeTab === 'Revision' && (
+        <RevisionTab revision={studentData.revision} />
+      )}
     </section>
   )
 }
@@ -105,16 +118,16 @@ function StatCard({ label, value }) {
   )
 }
 
-function OverviewTab() {
+function OverviewTab({ studentData }) {
   return (
     <div className="topic-content-grid">
       <article className="panel progress-panel">
         <div className="panel-heading">
           <p className="eyebrow">Прогресс по теме</p>
-          <h2>Общий: 70%</h2>
+          <h2>Общий: {studentData.topicProgress.value}%</h2>
         </div>
         <div className="skill-list">
-          {familySkillProgress.map((skill) => (
+          {studentData.skillProgress.map((skill) => (
             <div className="skill-row" key={skill.label}>
               <div>
                 <span>{skill.label}</span>
@@ -128,33 +141,43 @@ function OverviewTab() {
         </div>
       </article>
 
-      <ListPanel eyebrow="Что дальше" title="Следующие шаги" items={familyNextSteps} />
       <ListPanel
+        emptyText="Пока нет следующих шагов для этого профиля."
+        eyebrow="Что дальше"
+        items={studentData.nextSteps}
+        title="Следующие шаги"
+      />
+      <ListPanel
+        emptyText="Пока нет активности для этого профиля."
         eyebrow="Последняя активность"
+        items={studentData.activity}
         title="Недавняя работа"
-        items={familyActivity}
       />
     </div>
   )
 }
 
-function ListPanel({ eyebrow, items, title }) {
+function ListPanel({ emptyText, eyebrow, items, title }) {
   return (
     <article className="panel">
       <div className="panel-heading">
         <p className="eyebrow">{eyebrow}</p>
         <h2>{title}</h2>
       </div>
-      <div className="task-list">
-        {items.map((item) => (
-          <div className="task-item" key={`${item.title}-${item.description ?? item.result}`}>
-            <div>
-              <strong>{item.title}</strong>
-              <span>{item.description ?? item.result}</span>
+      {items.length > 0 ? (
+        <div className="task-list">
+          {items.map((item) => (
+            <div className="task-item" key={item.id}>
+              <div>
+                <strong>{item.title}</strong>
+                <span>{item.description ?? item.result}</span>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <p className="empty-state">{emptyText}</p>
+      )}
     </article>
   )
 }
@@ -272,10 +295,18 @@ function PracticeCard({ task }) {
   )
 }
 
-function ErrorsTab() {
+function ErrorsTab({ errors }) {
+  if (errors.length === 0) {
+    return (
+      <article className="panel">
+        <p className="empty-state">Для этого профиля пока нет ошибок.</p>
+      </article>
+    )
+  }
+
   return (
     <div className="material-grid">
-      {familyErrors.map((error) => (
+      {errors.map((error) => (
         <article className="error-card" key={error.id}>
           <div className="error-line is-original">
             <span aria-hidden="true">x</span>
@@ -309,29 +340,33 @@ function ErrorsTab() {
   )
 }
 
-function RevisionTab() {
+function RevisionTab({ revision }) {
   return (
     <article className="panel">
       <div className="panel-heading">
         <p className="eyebrow">Revision</p>
-        <h2>Due today — {familyRevision.dueToday}</h2>
+        <h2>Due today — {revision.dueToday}</h2>
       </div>
-      <div className="task-list">
-        {familyRevision.items.map((item) => (
-          <div className="task-item revision-task" key={item.id}>
-            <div>
-              <strong>{item.title}</strong>
-              <span>
-                {item.source} · last practised: {item.lastPractised} ·{' '}
-                {item.status}
-              </span>
+      {revision.items.length > 0 ? (
+        <div className="task-list">
+          {revision.items.map((item) => (
+            <div className="task-item revision-task" key={item.id}>
+              <div>
+                <strong>{item.title}</strong>
+                <span>
+                  {item.source} · last practised: {item.lastPractised} ·{' '}
+                  {item.status}
+                </span>
+              </div>
+              <button className="primary-button" type="button">
+                Повторить
+              </button>
             </div>
-            <button className="primary-button" type="button">
-              Повторить
-            </button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <p className="empty-state">Для этого профиля пока нет повторения.</p>
+      )}
     </article>
   )
 }

@@ -96,6 +96,7 @@
   z-index: 20;
   display: flex;
   align-items: center;
+  gap: 12px;
   justify-content: flex-end;
   min-height: 72px;
   padding: 16px 32px;
@@ -151,6 +152,153 @@
 .theme-toggle .is-selected {
   background: var(--accent);
   color: white;
+}
+
+.profile-switcher {
+  position: relative;
+}
+
+.profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.profile-trigger span,
+.profile-option {
+  display: grid;
+  gap: 1px;
+  text-align: left;
+}
+
+.profile-trigger strong,
+.profile-option span {
+  font-weight: 850;
+}
+
+.profile-trigger small,
+.profile-option small,
+.profile-form p {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.profile-trigger b {
+  color: var(--accent-strong);
+  font-size: 12px;
+}
+
+.profile-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  display: grid;
+  gap: 12px;
+  width: min(320px, calc(100vw - 32px));
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.profile-list,
+.profile-form {
+  display: grid;
+  gap: 8px;
+}
+
+.profile-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  gap: 8px;
+}
+
+.profile-option,
+.profile-add,
+.profile-delete {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.profile-option {
+  min-height: 48px;
+  padding: 8px 10px;
+}
+
+.profile-option:hover,
+.profile-add:hover,
+.profile-delete:hover:not(:disabled) {
+  background: var(--surface-soft);
+}
+
+.profile-option.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.profile-delete {
+  min-height: 34px;
+  color: var(--warning);
+  font-weight: 900;
+}
+
+.profile-delete:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.profile-add {
+  min-height: 40px;
+  padding: 8px 10px;
+  color: var(--accent-strong);
+  font-weight: 850;
+  text-align: left;
+}
+
+.profile-form {
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.profile-form label {
+  display: grid;
+  gap: 5px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.profile-form input {
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.profile-form p {
+  margin: 0;
+}
+
+.profile-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .main-content {
@@ -455,6 +603,12 @@ h2 {
 
 .menu-overlay {
   display: none;
+}
+
+.empty-state {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 650;
 }
 
 .page-stack {
@@ -855,7 +1009,23 @@ h2 {
   }
 
   .theme-toggle {
-    width: 136px;
+    width: 116px;
+  }
+
+  .profile-trigger {
+    max-width: 152px;
+    padding-inline: 10px;
+  }
+
+  .profile-trigger span {
+    min-width: 0;
+  }
+
+  .profile-trigger strong,
+  .profile-trigger small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .panel,

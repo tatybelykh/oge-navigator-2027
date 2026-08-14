@@ -10,13 +10,13 @@ OGE Navigator 2027 - privacy-first приложение для подготов�
 - Vite
 - JavaScript
 - CSS
-- localStorage только для выбранной темы
+- localStorage для выбранной темы, списка локальных профилей и activeStudentId
 
 ## Privacy-first подход
 
 В проекте нет Firebase, backend, пользовательских аккаунтов, базы данных, аналитики, трекеров, внешних API, API-ключей или секретов.
 
-Все учебные данные на текущем этапе - demo/mock data. Реальный прогресс учениц и персональные данные не сохраняются.
+Все учебные данные на текущем этапе - demo/mock data. Реальный прогресс учениц не сохраняется. Локальные профили используют нейтральные названия и хранятся только в браузере.
 
 ## Локальный запуск
 
@@ -37,6 +37,7 @@ npm run build
 - Главная страница в формате dashboard.
 - Desktop sidebar и компактное мобильное меню.
 - Переключатель Light / Dark theme с сохранением в localStorage.
+- Локальная архитектура профилей учениц: studentId, displayName, examYear, activeStudentId.
 - Demo data вынесены в `src/data/dashboardData.js`.
 - Блок общего прогресса с progress ring.
 - Progress indicators для навыков и активных chunks.

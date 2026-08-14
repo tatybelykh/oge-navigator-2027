@@ -1,12 +1,18 @@
 import { Sidebar } from './Sidebar'
+import { ProfileSwitcher } from './ProfileSwitcher'
 
 export function AppShell({
+  activeStudent,
   children,
   isMenuOpen,
   navItems,
+  onAddStudent,
   onCloseMenu,
+  onDeleteStudent,
+  onSelectStudent,
   onToggleMenu,
   onToggleTheme,
+  students,
   theme,
 }) {
   const themeLabel =
@@ -37,6 +43,14 @@ export function AppShell({
             <span className={theme === 'light' ? 'is-selected' : ''}>Light</span>
             <span className={theme === 'dark' ? 'is-selected' : ''}>Dark</span>
           </button>
+
+          <ProfileSwitcher
+            activeStudent={activeStudent}
+            onAddStudent={onAddStudent}
+            onDeleteStudent={onDeleteStudent}
+            onSelectStudent={onSelectStudent}
+            students={students}
+          />
         </header>
 
         {isMenuOpen && (

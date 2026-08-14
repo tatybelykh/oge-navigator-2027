@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-
-const STORAGE_KEY = 'oge-navigator-theme'
+import { localStorageService } from '../services/localStorageService'
 
 function getInitialTheme() {
-  const savedTheme = localStorage.getItem(STORAGE_KEY)
+  const savedTheme = localStorageService.getTheme()
 
   if (savedTheme === 'dark' || savedTheme === 'light') {
     return savedTheme
@@ -19,7 +18,7 @@ export function useTheme() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
-    localStorage.setItem(STORAGE_KEY, theme)
+    localStorageService.saveTheme(theme)
   }, [theme])
 
   const toggleTheme = () => {

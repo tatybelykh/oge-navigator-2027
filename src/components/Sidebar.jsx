@@ -1,3 +1,5 @@
+import { NavLink } from 'react-router-dom'
+
 export function Sidebar({ isMenuOpen, navItems, onClose }) {
   return (
     <aside className={`sidebar ${isMenuOpen ? 'is-open' : ''}`}>
@@ -17,17 +19,35 @@ export function Sidebar({ isMenuOpen, navItems, onClose }) {
             )
           }
 
+          if (item.path) {
+            return (
+              <NavLink
+                className={({ isActive }) =>
+                  [
+                    'nav-item',
+                    isActive ? 'is-active' : '',
+                    item.child ? 'is-child' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')
+                }
+                end={item.path === '/'}
+                key={item.label}
+                onClick={onClose}
+                to={item.path}
+              >
+                {item.label}
+              </NavLink>
+            )
+          }
+
           return (
             <button
-              className={[
-                'nav-item',
-                item.active ? 'is-active' : '',
-                item.child ? 'is-child' : '',
-              ]
+              className={['nav-item', item.child ? 'is-child' : '']
                 .filter(Boolean)
                 .join(' ')}
+              disabled
               key={item.label}
-              onClick={onClose}
               type="button"
             >
               {item.label}

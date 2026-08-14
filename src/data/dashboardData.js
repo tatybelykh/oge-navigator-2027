@@ -1,6 +1,6 @@
 export const navItems = [
-  { label: 'Главная', active: true },
-  { label: 'Темы' },
+  { label: 'Главная', path: '/' },
+  { label: 'Темы', path: '/topics' },
   { label: 'Чанки' },
   { label: 'Практика', section: true },
   { label: 'ФИПИ задания', child: true },
@@ -17,6 +17,7 @@ export const featureCards = [
     title: 'Темы',
     meta: '12 тем',
     action: 'Перейти',
+    path: '/topics',
     tone: 'violet',
   },
   {

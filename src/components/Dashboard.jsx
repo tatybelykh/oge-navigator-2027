@@ -1,4 +1,5 @@
 import { ProgressRing } from './ProgressRing'
+import { Link } from 'react-router-dom'
 
 export function Dashboard({
   activeChunks,
@@ -26,9 +27,15 @@ export function Dashboard({
               <h2>{card.title}</h2>
               <p>{card.meta}</p>
             </div>
-            <button className="text-button" type="button">
-              {card.action} <span aria-hidden="true">-&gt;</span>
-            </button>
+            {card.path ? (
+              <Link className="text-button" to={card.path}>
+                {card.action} <span aria-hidden="true">-&gt;</span>
+              </Link>
+            ) : (
+              <button className="text-button" type="button">
+                {card.action} <span aria-hidden="true">-&gt;</span>
+              </button>
+            )}
           </article>
         ))}
       </section>

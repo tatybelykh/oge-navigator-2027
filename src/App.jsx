@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { Dashboard } from './components/Dashboard'
 import {
@@ -10,6 +11,8 @@ import {
   revisionCard,
 } from './data/dashboardData'
 import { useTheme } from './hooks/useTheme'
+import { FamilyTopicPage } from './pages/FamilyTopicPage'
+import { TopicsPage } from './pages/TopicsPage'
 import './styles/app.css'
 
 function App() {
@@ -17,22 +20,37 @@ function App() {
   const { theme, toggleTheme } = useTheme()
 
   return (
-    <AppShell
-      isMenuOpen={isMenuOpen}
-      navItems={navItems}
-      onCloseMenu={() => setIsMenuOpen(false)}
-      onToggleMenu={() => setIsMenuOpen((isOpen) => !isOpen)}
-      onToggleTheme={toggleTheme}
-      theme={theme}
-    >
-      <Dashboard
-        activeChunks={activeChunks}
-        featureCards={featureCards}
-        progressSummary={progressSummary}
-        recentTasks={recentTasks}
-        revisionCard={revisionCard}
-      />
-    </AppShell>
+    <HashRouter>
+      <AppShell
+        isMenuOpen={isMenuOpen}
+        navItems={navItems}
+        onCloseMenu={() => setIsMenuOpen(false)}
+        onToggleMenu={() => setIsMenuOpen((isOpen) => !isOpen)}
+        onToggleTheme={toggleTheme}
+        theme={theme}
+      >
+        <Routes>
+          <Route
+            element={
+              <Dashboard
+                activeChunks={activeChunks}
+                featureCards={featureCards}
+                progressSummary={progressSummary}
+                recentTasks={recentTasks}
+                revisionCard={revisionCard}
+              />
+            }
+            path="/"
+          />
+          <Route element={<TopicsPage />} path="/topics" />
+          <Route
+            element={<FamilyTopicPage />}
+            path="/topics/family-relationships"
+          />
+          <Route element={<Navigate replace to="/" />} path="*" />
+        </Routes>
+      </AppShell>
+    </HashRouter>
   )
 }
 

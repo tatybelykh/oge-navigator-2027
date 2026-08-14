@@ -100,6 +100,54 @@ export function useLocalStudentData(studentId) {
     })
   }
 
+  const addSpeakingTask1Attempt = ({
+    addedWords,
+    durationSeconds,
+    lineSkipped,
+    material,
+    meaningDistortingErrorCount,
+    mode,
+    omittedWords,
+    phoneticErrorCount,
+    score,
+    selfReview,
+    teacherNotes,
+    textCompleted,
+  }) => {
+    const numericScore = Number(score)
+    const maxScore = 2
+    const attempt = {
+      id: `attempt-${crypto.randomUUID()}`,
+      studentId,
+      materialId: material.id,
+      materialTitle: material.title,
+      materialSourceType: material.sourceType,
+      topicId: material.topicId,
+      taskType: 'speaking-task-1',
+      section: 'Speaking',
+      mode,
+      completedAt: new Date().toISOString(),
+      durationSeconds,
+      score: numericScore,
+      maxScore,
+      percentage: Math.round((numericScore / maxScore) * 100),
+      status: numericScore === maxScore ? 'completed' : 'retry',
+      phoneticErrorCount: Number(phoneticErrorCount),
+      meaningDistortingErrorCount: Number(meaningDistortingErrorCount),
+      omittedWords: Number(omittedWords),
+      addedWords: Number(addedWords),
+      lineSkipped,
+      textCompleted,
+      teacherNotes,
+      selfReview,
+    }
+
+    saveStudentData({
+      ...studentData,
+      attempts: [...studentData.attempts, attempt],
+    })
+  }
+
   const addSpeakingTask3Attempt = ({
     aspectReview,
     chunkUsage,
@@ -139,6 +187,16 @@ export function useLocalStudentData(studentId) {
     saveStudentData({
       ...studentData,
       attempts: [...studentData.attempts, attempt],
+    })
+  }
+
+  const saveSpeakingTask1FocusNotes = (materialId, notes) => {
+    saveStudentData({
+      ...studentData,
+      speakingTask1FocusNotes: {
+        ...(studentData.speakingTask1FocusNotes ?? {}),
+        [materialId]: notes,
+      },
     })
   }
 
@@ -271,6 +329,7 @@ export function useLocalStudentData(studentId) {
 
   return {
     addAttempt,
+    addSpeakingTask1Attempt,
     addSpeakingTask2Attempt,
     addSpeakingTask3Attempt,
     addError,
@@ -278,6 +337,7 @@ export function useLocalStudentData(studentId) {
     deleteError,
     removeRevisionItem,
     resetProgress,
+    saveSpeakingTask1FocusNotes,
     studentData,
     updateChunkStatus,
     updateError,

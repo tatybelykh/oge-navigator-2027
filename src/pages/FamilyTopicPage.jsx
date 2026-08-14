@@ -373,10 +373,12 @@ function PracticeCard({ attempts, material, onAddAttempt, onAddRevision }) {
           <dt>Type</dt>
           <dd>{material.taskType}</dd>
         </div>
-        <div>
-          <dt>Target chunks</dt>
-          <dd>{material.targetChunks.join(', ')}</dd>
-        </div>
+        {material.targetChunks ? (
+          <div>
+            <dt>Target chunks</dt>
+            <dd>{material.targetChunks.join(', ')}</dd>
+          </div>
+        ) : null}
         <div>
           <dt>Difficulty</dt>
           <dd>{material.difficulty}</dd>
@@ -411,7 +413,7 @@ function PracticeCard({ attempts, material, onAddAttempt, onAddRevision }) {
       )}
 
       <div className="material-actions">
-        {['speaking-task-2', 'speaking-task-3'].includes(material.taskType) ? (
+        {['speaking-task-1', 'speaking-task-2', 'speaking-task-3'].includes(material.taskType) ? (
           <SpeakingPracticeLink material={material} />
         ) : (
           <button
@@ -452,7 +454,12 @@ function PracticeCard({ attempts, material, onAddAttempt, onAddRevision }) {
 }
 
 function SpeakingPracticeLink({ material }) {
-  const taskSearch = material.taskType === 'speaking-task-3' ? 'task=3&' : ''
+  const taskSearchByType = {
+    'speaking-task-1': 'task=1&',
+    'speaking-task-2': 'task=2&',
+    'speaking-task-3': 'task=3&',
+  }
+  const taskSearch = taskSearchByType[material.taskType] ?? ''
 
   return (
     <Link className="primary-link" to={`/speaking?${taskSearch}set=${material.id}`}>

@@ -1123,6 +1123,53 @@ button.feature-card:hover,
   font-weight: 750;
 }
 
+.reading-text-card {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.reading-text-card > *,
+.reading-text-card .useful-language {
+  min-width: 0;
+}
+
+.reading-text-card .section-chip-row {
+  flex-wrap: wrap;
+  overflow-x: visible;
+}
+
+.reading-text {
+  display: grid;
+  gap: 12px;
+  width: min(100%, 760px);
+  min-width: 0;
+  max-width: 760px;
+  color: var(--text);
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  font-size: 22px;
+  font-weight: 450;
+  line-height: 1.72;
+  overflow-wrap: break-word;
+}
+
+.reading-text p {
+  margin: 0;
+}
+
+.reading-focus-item {
+  align-items: start;
+  justify-content: start;
+}
+
+.reading-focus-item span {
+  color: var(--muted);
+  font-weight: 750;
+}
+
+.reading-score-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .form-error,
 .status-message {
   margin: 0;
@@ -1381,6 +1428,21 @@ button.feature-card:hover,
 
   .task-item {
     align-items: flex-start;
+  }
+
+  .question-stage__top,
+  .question-review-item {
+    align-items: flex-start;
+  }
+
+  .reading-text {
+    max-width: 100%;
+    font-size: 20px;
+    line-height: 1.65;
+  }
+
+  .reading-score-grid {
+    grid-template-columns: 1fr;
   }
 
   .stats-grid {

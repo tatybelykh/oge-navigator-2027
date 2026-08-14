@@ -1,3 +1,4 @@
+import { familyTask1Texts } from './speaking/familyTask1Texts'
 import { familyTask2Sets } from './speaking/familyTask2Sets'
 import { familyTask3Sets } from './speaking/familyTask3Sets'
 
@@ -20,6 +21,13 @@ export const familyExtraPractice = [
     difficulty: 'Easy',
     progressSection: 'Speaking',
   },
+  ...familyTask1Texts.map((text) => ({
+    ...text,
+    section: 'Extra Practice',
+    source: 'OGE Navigator',
+    tags: ['family', 'speaking-task-1', 'exam-style'],
+    progressSection: 'Speaking',
+  })),
   ...familyTask2Sets.map((set) => ({
     ...set,
     section: 'Extra Practice',

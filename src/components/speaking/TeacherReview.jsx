@@ -23,7 +23,7 @@ export function TeacherReview({
   onAddError,
   onAddRevision,
   onSaveResult,
-  recordings,
+  sessionRecording,
 }) {
   const [questionScores, setQuestionScores] = useState(() =>
     material.questions.map((question) => ({
@@ -60,6 +60,22 @@ export function TeacherReview({
             Score: {totalScore}/{speakingTask2Config.maxScore}
           </h2>
         </div>
+        {sessionRecording?.url ? (
+          <div className="audio-review-row">
+            <audio controls src={sessionRecording.url}>
+              <track kind="captions" />
+            </audio>
+            <a
+              className="text-button"
+              download={makeSessionAudioFileName(material, sessionRecording.mimeType)}
+              href={sessionRecording.url}
+            >
+              Скачать общий файл
+            </a>
+          </div>
+        ) : (
+          <p className="empty-state">Общий аудиофайл ещё формируется.</p>
+        )}
         <details className="criteria-help">
           <summary>Как оценивать Task 2</summary>
           <p>
@@ -82,7 +98,6 @@ export function TeacherReview({
 
       {material.questions.map((question, index) => {
         const questionScore = questionScores[index]
-        const recording = recordings[question.id]
 
         return (
           <article className="review-card" key={question.id}>
@@ -93,22 +108,9 @@ export function TeacherReview({
               </span>
             </div>
             <p>{question.text}</p>
-            {recording?.url ? (
-              <div className="audio-review-row">
-                <audio controls src={recording.url}>
-                  <track kind="captions" />
-                </audio>
-                <a
-                  className="text-button"
-                  download={makeAudioFileName(material, index + 1, recording.mimeType)}
-                  href={recording.url}
-                >
-                  Скачать
-                </a>
-              </div>
-            ) : (
-              <p className="empty-state">Аудио для этого вопроса нет.</p>
-            )}
+            <p className="empty-state">
+              Ответ оценивается по общей непрерывной записи выше.
+            </p>
 
             <div className="score-toggle" aria-label={`Score for question ${index + 1}`}>
               {[0, 1].map((score) => (
@@ -322,10 +324,10 @@ function SpeakingErrorForm({ materialId, onCancel, onSave, questionId }) {
   )
 }
 
-function makeAudioFileName(material, questionNumber, mimeType) {
+function makeSessionAudioFileName(material, mimeType) {
   const date = new Date().toISOString().slice(0, 10)
   const extension = mimeType?.includes('mp4') ? 'mp4' : 'webm'
   const safeTitle = material.title.replaceAll(' ', '-')
 
-  return `OGE_Family_Task2_${safeTitle}_Q${questionNumber}_${date}.${extension}`
+  return `OGE_Family_Task2_${safeTitle}_session_${date}.${extension}`
 }

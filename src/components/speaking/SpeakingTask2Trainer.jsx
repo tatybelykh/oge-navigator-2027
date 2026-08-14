@@ -16,30 +16,14 @@ function speakingReducer(state, action) {
   switch (action.type) {
     case 'MIC_CHECK':
       return { ...state, status: 'mic-check' }
-    case 'READY':
-      return { ...state, status: 'ready' }
     case 'START':
-      return {
-        ...initialState,
-        mode: action.mode,
-        status: action.mode === 'exam' ? 'intro' : 'ready',
-      }
-    case 'ASK':
-      return { ...state, status: 'asking-question' }
-    case 'RECORD':
+      return { ...initialState, mode: action.mode, status: 'ready' }
+    case 'QUESTION':
       return {
         ...state,
+        currentQuestionIndex: action.index,
         endAt: Date.now() + speakingTask2Config.answerTimeSeconds * 1000,
         status: 'recording-answer',
-      }
-    case 'BETWEEN':
-      return { ...state, endAt: null, status: 'between-questions' }
-    case 'NEXT':
-      return {
-        ...state,
-        currentQuestionIndex: state.currentQuestionIndex + 1,
-        endAt: null,
-        status: action.autoAsk ? 'asking-question' : 'ready',
       }
     case 'COMPLETED':
       return { ...state, endAt: null, status: 'completed' }
@@ -56,21 +40,25 @@ export function SpeakingTask2Trainer({
   material,
   onAddError,
   onAddRevision,
+  onBackToSets,
   onSaveResult,
 }) {
   const [state, dispatch] = useReducer(speakingReducer, initialState)
   const [error, setError] = useState('')
+  const [isStarting, setIsStarting] = useState(false)
   const [isVoiceReady, setIsVoiceReady] = useState(false)
+  const [isQuestionPlaybackComplete, setIsQuestionPlaybackComplete] = useState(false)
   const [selectedVoiceURI, setSelectedVoiceURI] = useState(() =>
     localStorageService.getSpeakingVoiceURI(),
   )
   const [voices, setVoices] = useState([])
-  const [recordings, setRecordings] = useState({})
+  const [sessionRecording, setSessionRecording] = useState(null)
   const [isRecording, setIsRecording] = useState(false)
   const chunksRef = useRef([])
-  const recordingStartedAtRef = useRef(null)
+  const discardRecordingRef = useRef(false)
   const recorderRef = useRef(null)
-  const recordingsRef = useRef({})
+  const recordingStartedAtRef = useRef(null)
+  const sessionRecordingRef = useRef(null)
   const streamRef = useRef(null)
 
   const localEnglishVoices = useMemo(
@@ -88,6 +76,11 @@ export function SpeakingTask2Trainer({
   const currentQuestion = material.questions[state.currentQuestionIndex]
   const isLastQuestion =
     state.currentQuestionIndex === speakingTask2Config.questionCount - 1
+  const canStartAttempt = isVoiceReady && localEnglishVoices.length > 0
+  const hasStartedAttempt =
+    ['recording-answer', 'completed', 'review'].includes(state.status) ||
+    isRecording ||
+    Boolean(sessionRecording)
 
   useEffect(() => {
     const loadVoices = () => {
@@ -110,26 +103,46 @@ export function SpeakingTask2Trainer({
     }
   }, [selectedVoice?.voiceURI])
 
-  const cleanup = useCallback(() => {
+  useEffect(() => {
+    sessionRecordingRef.current = sessionRecording
+  }, [sessionRecording])
+
+  const clearSessionRecording = useCallback(() => {
+    if (sessionRecordingRef.current?.url) {
+      URL.revokeObjectURL(sessionRecordingRef.current.url)
+    }
+    sessionRecordingRef.current = null
+    setSessionRecording(null)
+  }, [])
+
+  const stopSessionRecording = useCallback(({ discard = false } = {}) => {
+    discardRecordingRef.current = discard
+
     if (recorderRef.current?.state === 'recording') {
       recorderRef.current.stop()
     }
+
     streamRef.current?.getTracks().forEach((track) => track.stop())
     streamRef.current = null
-    window.speechSynthesis?.cancel()
     setIsRecording(false)
   }, [])
 
-  useEffect(() => {
-    recordingsRef.current = recordings
-  }, [recordings])
+  const cleanup = useCallback(
+    ({ discard = false } = {}) => {
+      window.speechSynthesis?.cancel()
+      stopSessionRecording({ discard })
+
+      if (discard) {
+        chunksRef.current = []
+        clearSessionRecording()
+      }
+    },
+    [clearSessionRecording, stopSessionRecording],
+  )
 
   useEffect(
     () => () => {
-      cleanup()
-      Object.values(recordingsRef.current).forEach((recording) =>
-        URL.revokeObjectURL(recording.url),
-      )
+      cleanup({ discard: true })
     },
     [cleanup],
   )
@@ -138,7 +151,7 @@ export function SpeakingTask2Trainer({
     (text, onEnd) => {
       if (!window.speechSynthesis || !selectedVoice) {
         setError(
-          'На этом устройстве не найден локальный английский голос. Practice Mode доступен с текстом вопроса. Для Exam Mode нужен локальный английский голос в системе.',
+          'На этом устройстве не найден локальный английский голос. Для попытки нужен локальный английский голос в системе.',
         )
         onEnd?.()
         return
@@ -158,119 +171,131 @@ export function SpeakingTask2Trainer({
     [selectedVoice],
   )
 
-  const startRecording = async (questionId) => {
+  const startSessionRecording = async () => {
     setError('')
+    clearSessionRecording()
 
     if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
-      setError(
-        'В этом браузере запись аудио недоступна. Вы всё равно можете использовать Practice Mode без записи.',
+      throw new Error(
+        'В этом браузере запись аудио недоступна. Попробуйте другой современный браузер.',
       )
-      dispatch({ type: 'RECORD' })
-      return
     }
 
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    const recorder = new MediaRecorder(stream)
+    chunksRef.current = []
+    discardRecordingRef.current = false
+    streamRef.current = stream
+    recorderRef.current = recorder
+    recorder.addEventListener('dataavailable', (event) => {
+      if (event.data.size > 0) {
+        chunksRef.current.push(event.data)
+      }
+    })
+    recorder.addEventListener('stop', () => {
+      if (discardRecordingRef.current) {
+        chunksRef.current = []
+        return
+      }
+
+      const mimeType = recorder.mimeType || 'audio/webm'
+      const audioBlob = new Blob(chunksRef.current, { type: mimeType })
+      const duration = recordingStartedAtRef.current
+        ? Math.max(1, Math.round((Date.now() - recordingStartedAtRef.current) / 1000))
+        : 0
+      const nextRecording = {
+        audioBlob,
+        duration,
+        mimeType,
+        questionId: 'speaking-task-2-session',
+        url: URL.createObjectURL(audioBlob),
+      }
+
+      sessionRecordingRef.current = nextRecording
+      setSessionRecording(nextRecording)
+    })
+    recorder.start()
+    recordingStartedAtRef.current = Date.now()
+    setIsRecording(true)
+  }
+
+  const startQuestion = useCallback(
+    (questionIndex) => {
+      const question = material.questions[questionIndex]
+
+      if (!question) {
+        stopSessionRecording()
+        dispatch({ type: 'COMPLETED' })
+        return
+      }
+
+      setIsQuestionPlaybackComplete(false)
+      dispatch({ type: 'QUESTION', index: questionIndex })
+      speak(question.text, () => setIsQuestionPlaybackComplete(true))
+    },
+    [material.questions, speak, stopSessionRecording],
+  )
+
+  const startAttempt = async () => {
+    setIsStarting(true)
+    setError('')
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const recorder = new MediaRecorder(stream)
-      chunksRef.current = []
-      streamRef.current = stream
-      recorderRef.current = recorder
-      recorder.addEventListener('dataavailable', (event) => {
-        if (event.data.size > 0) {
-          chunksRef.current.push(event.data)
-        }
-      })
-      recorder.addEventListener('stop', () => {
-        const mimeType = recorder.mimeType || 'audio/webm'
-        const audioBlob = new Blob(chunksRef.current, { type: mimeType })
-        const duration = recordingStartedAtRef.current
-          ? Math.max(1, Math.round((Date.now() - recordingStartedAtRef.current) / 1000))
-          : 0
-        setRecordings((current) => {
-          if (current[questionId]?.url) {
-            URL.revokeObjectURL(current[questionId].url)
-          }
-          return {
-            ...current,
-            [questionId]: {
-              audioBlob,
-              duration,
-              mimeType,
-              questionId,
-              url: URL.createObjectURL(audioBlob),
-            },
-          }
-        })
-        stream.getTracks().forEach((track) => track.stop())
-        setIsRecording(false)
-      })
-      recorder.start()
-      recordingStartedAtRef.current = Date.now()
-      setIsRecording(true)
-      dispatch({ type: 'RECORD' })
-    } catch {
-      setError(
-        'Не удалось получить доступ к микрофону. Проверьте разрешение в браузере и попробуйте ещё раз.',
-      )
+      await startSessionRecording()
+      startQuestion(0)
+    } catch (startError) {
+      setError(startError.message)
+    } finally {
+      setIsStarting(false)
     }
   }
 
-  const stopRecording = useCallback(() => {
-    if (recorderRef.current?.state === 'recording') {
-      recorderRef.current.stop()
-    }
-    streamRef.current?.getTracks().forEach((track) => track.stop())
-    setIsRecording(false)
-  }, [])
+  const finishAttempt = useCallback(() => {
+    window.speechSynthesis?.cancel()
+    stopSessionRecording()
+    dispatch({ type: 'COMPLETED' })
+    speak(speakingTask2Config.outroText)
+  }, [speak, stopSessionRecording])
 
-  const finishQuestion = useCallback(() => {
-    stopRecording()
-
+  const goToNextQuestion = useCallback(() => {
     if (isLastQuestion) {
-      dispatch({ type: 'COMPLETED' })
-      speak(speakingTask2Config.outroText)
+      finishAttempt()
       return
     }
 
-    dispatch({ type: 'BETWEEN' })
-  }, [isLastQuestion, speak, stopRecording])
+    startQuestion(state.currentQuestionIndex + 1)
+  }, [finishAttempt, isLastQuestion, startQuestion, state.currentQuestionIndex])
 
-  const askCurrentQuestion = useCallback(() => {
-    if (!currentQuestion) {
-      dispatch({ type: 'COMPLETED' })
-      return
+  const replayQuestion = () => {
+    if (currentQuestion) {
+      speak(currentQuestion.text)
     }
-
-    dispatch({ type: 'ASK' })
-  }, [currentQuestion])
-
-  useEffect(() => {
-    if (state.status === 'intro') {
-      speak(speakingTask2Config.introText, () => askCurrentQuestion())
-    }
-  }, [askCurrentQuestion, speak, state.status])
-
-  useEffect(() => {
-    if (state.status !== 'asking-question' || !currentQuestion) {
-      return
-    }
-
-    speak(currentQuestion.text, () => {
-      if (state.mode === 'exam') {
-        startRecording(currentQuestion.id)
-      }
-    })
-  }, [currentQuestion, speak, state.mode, state.status])
+  }
 
   const cancelTraining = () => {
     if (
-      window.confirm('Текущие несохранённые записи будут потеряны.')
+      window.confirm(
+        'Завершить тренировку? Текущая несохранённая запись будет потеряна.',
+      )
     ) {
-      cleanup()
-      Object.values(recordings).forEach((recording) => URL.revokeObjectURL(recording.url))
-      setRecordings({})
+      cleanup({ discard: true })
       dispatch({ type: 'RESET' })
     }
+  }
+
+  const handleBackToSets = () => {
+    if (
+      hasStartedAttempt &&
+      !window.confirm(
+        'Завершить тренировку? Текущая несохранённая запись будет потеряна.',
+      )
+    ) {
+      return
+    }
+
+    cleanup({ discard: hasStartedAttempt })
+    dispatch({ type: 'RESET' })
+    onBackToSets()
   }
 
   if (state.status === 'review') {
@@ -282,17 +307,20 @@ export function SpeakingTask2Trainer({
         onAddRevision={onAddRevision}
         onSaveResult={(attempt) => {
           onSaveResult(attempt)
-          Object.values(recordings).forEach((recording) => URL.revokeObjectURL(recording.url))
-          setRecordings({})
+          clearSessionRecording()
           dispatch({ type: 'RESET' })
         }}
-        recordings={recordings}
+        sessionRecording={sessionRecording}
       />
     )
   }
 
   return (
     <section className="speaking-trainer">
+      <button className="text-button" onClick={handleBackToSets} type="button">
+        ← К наборам Speaking Task 2
+      </button>
+
       <article className="panel">
         <div className="panel-heading">
           <p className="eyebrow">Speaking Task 2</p>
@@ -305,8 +333,8 @@ export function SpeakingTask2Trainer({
           <span className="section-chip">{speakingTask2Config.examModel}</span>
         </div>
         <p className="empty-state">
-          Запись не отправляется на сервер. Аудио существует только в текущей
-          сессии и может быть сохранено вручную на устройство.
+          Запись не отправляется на сервер. Аудио можно сохранить на устройство
+          после завершения попытки.
         </p>
       </article>
 
@@ -331,9 +359,8 @@ export function SpeakingTask2Trainer({
           </label>
         ) : (
           <p className="form-error">
-            На этом устройстве не найден локальный английский голос. Practice Mode
-            доступен с текстом вопроса. Для Exam Mode нужен локальный английский
-            голос в системе.
+            На этом устройстве не найден локальный английский голос. Для попытки
+            нужен локальный английский голос в системе.
           </p>
         )}
       </article>
@@ -345,12 +372,12 @@ export function SpeakingTask2Trainer({
             onClick={() => dispatch({ type: 'START', mode: 'practice' })}
             type="button"
           >
-            <span>Practice Mode</span>
-            <strong>Text, chunks, retry and manual next question</strong>
+            <span>Training Mode</span>
+            <strong>Text, chunks, replay and next question</strong>
           </button>
           <button
             className="mode-card"
-            disabled={!isVoiceReady || localEnglishVoices.length === 0}
+            disabled={!canStartAttempt}
             onClick={() => dispatch({ type: 'START', mode: 'exam' })}
             type="button"
           >
@@ -368,14 +395,39 @@ export function SpeakingTask2Trainer({
       )}
 
       {state.status === 'mic-check' && (
-        <MicrophoneCheck onReady={() => dispatch({ type: 'READY' })} />
+        <MicrophoneCheck onReady={() => dispatch({ type: 'RESET' })} />
       )}
 
       {error && <p className="form-error">{error}</p>}
 
-      {['ready', 'asking-question', 'recording-answer', 'between-questions', 'completed'].includes(
-        state.status,
-      ) && (
+      {state.status === 'ready' && (
+        <article className="question-stage">
+          <div className="question-stage__top">
+            <span className="status-pill status-started">
+              {state.mode === 'practice' ? 'Training Mode' : 'Exam Mode'}
+            </span>
+          </div>
+          <h2>Готово к попытке</h2>
+          <p className="empty-state">
+            После старта сразу начнутся запись, Question 1 и таймер.
+          </p>
+          <div className="material-actions">
+            <button
+              className="primary-button"
+              disabled={isStarting || !canStartAttempt}
+              onClick={startAttempt}
+              type="button"
+            >
+              Начать попытку
+            </button>
+            <button className="text-button danger-button" onClick={() => dispatch({ type: 'RESET' })} type="button">
+              Отмена
+            </button>
+          </div>
+        </article>
+      )}
+
+      {['recording-answer', 'completed'].includes(state.status) && (
         <article className="question-stage">
           <div className="question-stage__top">
             <span className="status-pill status-started">
@@ -383,7 +435,7 @@ export function SpeakingTask2Trainer({
               {speakingTask2Config.questionCount}
             </span>
             {state.status === 'recording-answer' && (
-              <SpeakingTimer endAt={state.endAt} onComplete={finishQuestion} />
+              <SpeakingTimer endAt={state.endAt} onComplete={goToNextQuestion} />
             )}
           </div>
 
@@ -408,38 +460,19 @@ export function SpeakingTask2Trainer({
           )}
 
           <div className="material-actions">
-            {state.mode === 'practice' && currentQuestion && (
-              <button className="text-button" onClick={() => speak(currentQuestion.text)} type="button">
-                Прослушать вопрос
-              </button>
-            )}
-            {state.status === 'ready' && currentQuestion && (
-              <button
-                className="primary-button"
-                onClick={() => {
-                  if (state.mode === 'practice') {
-                    startRecording(currentQuestion.id)
-                  } else {
-                    askCurrentQuestion()
-                  }
-                }}
-                type="button"
-              >
-                {state.mode === 'practice' ? 'Начать ответ' : 'Слушать вопрос'}
+            {state.mode === 'practice' && currentQuestion && state.status === 'recording-answer' && (
+              <button className="text-button" onClick={replayQuestion} type="button">
+                ↻ Прослушать ещё раз
               </button>
             )}
             {state.status === 'recording-answer' && (
-              <button className="primary-button big-done-button" onClick={finishQuestion} type="button">
-                Готово
-              </button>
-            )}
-            {state.status === 'between-questions' && (
               <button
-                className="primary-button"
-                onClick={() => dispatch({ type: 'NEXT', autoAsk: state.mode === 'exam' })}
+                className="primary-button big-done-button"
+                disabled={!isQuestionPlaybackComplete}
+                onClick={goToNextQuestion}
                 type="button"
               >
-                Следующий вопрос
+                {isLastQuestion ? 'Завершить попытку' : 'Следующий вопрос →'}
               </button>
             )}
             {state.status === 'completed' && (
@@ -447,27 +480,41 @@ export function SpeakingTask2Trainer({
                 Перейти к проверке
               </button>
             )}
-            {state.status !== 'completed' && state.status !== 'idle' && (
+            {state.status !== 'completed' && (
               <button className="text-button danger-button" onClick={cancelTraining} type="button">
                 Завершить тренировку
               </button>
             )}
           </div>
 
-          {isRecording && <p className="status-message">Идёт локальная запись...</p>}
+          {isRecording && state.status !== 'completed' && (
+            <p className="status-message">Идёт непрерывная локальная запись...</p>
+          )}
 
-          {currentQuestion && recordings[currentQuestion.id]?.url && state.mode === 'practice' && (
+          {sessionRecording?.url && state.status === 'completed' && (
             <div className="audio-review-row">
-              <audio controls src={recordings[currentQuestion.id].url}>
+              <audio controls src={sessionRecording.url}>
                 <track kind="captions" />
               </audio>
-              <button className="text-button" onClick={() => startRecording(currentQuestion.id)} type="button">
-                Перезаписать
-              </button>
+              <a
+                className="text-button"
+                download={makeSessionAudioFileName(material, sessionRecording.mimeType)}
+                href={sessionRecording.url}
+              >
+                Скачать общий файл
+              </a>
             </div>
           )}
         </article>
       )}
     </section>
   )
+}
+
+function makeSessionAudioFileName(material, mimeType) {
+  const date = new Date().toISOString().slice(0, 10)
+  const extension = mimeType?.includes('mp4') ? 'mp4' : 'webm'
+  const safeTitle = material.title.replaceAll(' ', '-')
+
+  return `OGE_Family_Task2_${safeTitle}_session_${date}.${extension}`
 }

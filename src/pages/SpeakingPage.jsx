@@ -17,12 +17,18 @@ export function SpeakingPage({ progressActions }) {
     setSearchParams({ set: setId })
   }
 
+  const closeSet = () => {
+    setSelectedSetId(null)
+    setSearchParams({})
+  }
+
   if (selectedSet) {
     return (
       <SpeakingTask2Trainer
         material={selectedSet}
         onAddError={progressActions.addError}
         onAddRevision={progressActions.addRevisionItem}
+        onBackToSets={closeSet}
         onSaveResult={progressActions.addSpeakingTask2Attempt}
       />
     )

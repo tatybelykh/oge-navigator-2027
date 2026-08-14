@@ -625,6 +625,24 @@ button.feature-card:hover,
   color: var(--accent-strong);
 }
 
+.task3-plan-item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  justify-content: start;
+  align-items: start;
+  gap: 12px;
+}
+
+.task3-plan-item span {
+  line-height: 1.45;
+}
+
+.task3-plan-item strong {
+  min-width: 0;
+  line-height: 1.45;
+  text-align: left;
+}
+
 .chunk-item {
   display: grid;
   gap: 6px;

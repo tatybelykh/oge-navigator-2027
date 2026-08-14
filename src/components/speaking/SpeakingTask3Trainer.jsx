@@ -413,9 +413,9 @@ function TaskPreview({ material, showSupport, showUsefulLanguage }) {
     <article className="review-card">
       <h2>{material.prompt}</h2>
       <p>You have to talk continuously.</p>
-      <div className="task-list">
+      <div className="task-list task3-plan-list">
         {material.planPoints.map((point, index) => (
-          <div className="task-item" key={point}>
+          <div className="task-item task3-plan-item" key={point}>
             <span>{index + 1}</span>
             <strong>{point}</strong>
           </div>

@@ -7,6 +7,7 @@ export function ProfileSwitcher({
   activeStudent,
   onAddStudent,
   onDeleteStudent,
+  onResetProgress,
   onSelectStudent,
   students,
 }) {
@@ -40,6 +41,17 @@ export function ProfileSwitcher({
   const handleDelete = (studentId) => {
     if (window.confirm(deleteMessage)) {
       onDeleteStudent(studentId)
+    }
+  }
+
+  const handleResetProgress = () => {
+    if (
+      window.confirm(
+        'Удалить весь локальный прогресс, ошибки, revision и историю попыток этого профиля? Это действие нельзя отменить.',
+      )
+    ) {
+      onResetProgress()
+      setIsOpen(false)
     }
   }
 
@@ -129,13 +141,22 @@ export function ProfileSwitcher({
               </div>
             </form>
           ) : (
-            <button
-              className="profile-add"
-              onClick={() => setIsAdding(true)}
-              type="button"
-            >
-              + Добавить профиль
-            </button>
+            <div className="profile-menu-actions">
+              <button
+                className="profile-add"
+                onClick={() => setIsAdding(true)}
+                type="button"
+              >
+                + Добавить профиль
+              </button>
+              <button
+                className="profile-add danger-button"
+                onClick={handleResetProgress}
+                type="button"
+              >
+                Сбросить учебный прогресс
+              </button>
+            </div>
           )}
         </div>
       )}

@@ -33,33 +33,3 @@ export const featureCards = [
     tone: 'mint',
   },
 ]
-
-export const progressSummary = {
-  overall: 72,
-  skills: [
-    { label: 'Reading', value: 78 },
-    { label: 'Listening', value: 65 },
-    { label: 'Grammar', value: 70 },
-    { label: 'Writing', value: 60 },
-    { label: 'Speaking', value: 75 },
-  ],
-}
-
-export const recentTasks = [
-  { type: 'Reading', title: 'Text with gaps', result: '80%' },
-  { type: 'Speaking Task 3', title: 'Family', result: '6/7' },
-  { type: 'Grammar', title: 'Word formation', result: '90%' },
-]
-
-export const activeChunks = [
-  { phrase: 'get on well with', progress: 86 },
-  { phrase: 'have a lot in common', progress: 72 },
-  { phrase: 'spend time together', progress: 68 },
-  { phrase: 'be close to somebody', progress: 61 },
-  { phrase: 'fall out with', progress: 48 },
-]
-
-export const revisionCard = {
-  count: 7,
-  label: 'элементов',
-}

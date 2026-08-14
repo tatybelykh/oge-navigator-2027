@@ -8,6 +8,20 @@ export const storageKeys = {
   studentData: 'ogeNavigator.studentData',
 }
 
+export function createEmptyStudentData(studentId) {
+  return {
+    version: STORAGE_VERSION,
+    studentId,
+    topicProgress: {},
+    attempts: [],
+    chunkProgress: {},
+    errors: [],
+    revision: [],
+    teacherNotes: [],
+    completedTasks: [],
+  }
+}
+
 function readJson(key, fallback) {
   try {
     const rawValue = localStorage.getItem(key)
@@ -24,6 +38,40 @@ function readJson(key, fallback) {
 
 function writeJson(key, value) {
   localStorage.setItem(key, JSON.stringify(value))
+}
+
+function readStudentDataStore() {
+  const store = readJson(storageKeys.studentData, null)
+
+  if (!store || store.version !== STORAGE_VERSION || !store.byStudentId) {
+    return {
+      version: STORAGE_VERSION,
+      byStudentId: {},
+    }
+  }
+
+  return store
+}
+
+function writeStudentDataStore(store) {
+  writeJson(storageKeys.studentData, {
+    version: STORAGE_VERSION,
+    byStudentId: store.byStudentId,
+  })
+}
+
+function normalizeStudentData(studentId, data) {
+  return {
+    ...createEmptyStudentData(studentId),
+    ...data,
+    version: STORAGE_VERSION,
+    studentId,
+    attempts: Array.isArray(data?.attempts) ? data.attempts : [],
+    errors: Array.isArray(data?.errors) ? data.errors : [],
+    revision: Array.isArray(data?.revision) ? data.revision : [],
+    chunkProgress: data?.chunkProgress ?? {},
+    topicProgress: data?.topicProgress ?? {},
+  }
 }
 
 export const localStorageService = {
@@ -76,31 +124,45 @@ export const localStorageService = {
     localStorage.setItem(storageKeys.activeStudentId, studentId)
   },
 
-  removeStudentData(studentId) {
-    const studentData = readJson(storageKeys.studentData, {
-      version: STORAGE_VERSION,
-      byStudentId: {},
-    })
+  getStudentData(studentId, seedData) {
+    const store = readStudentDataStore()
+    const existingData = store.byStudentId[studentId]
 
-    if (!studentData.byStudentId) {
-      return
+    if (existingData) {
+      return normalizeStudentData(studentId, existingData)
     }
 
-    const nextData = { ...studentData.byStudentId }
-    delete nextData[studentId]
+    const initialData = normalizeStudentData(
+      studentId,
+      seedData ?? createEmptyStudentData(studentId),
+    )
+    store.byStudentId[studentId] = initialData
+    writeStudentDataStore(store)
 
-    writeJson(storageKeys.studentData, {
-      version: STORAGE_VERSION,
-      byStudentId: nextData,
-    })
+    return initialData
+  },
+
+  saveStudentData(studentId, data) {
+    const store = readStudentDataStore()
+    store.byStudentId[studentId] = normalizeStudentData(studentId, data)
+    writeStudentDataStore(store)
+  },
+
+  resetStudentData(studentId) {
+    this.saveStudentData(studentId, createEmptyStudentData(studentId))
+  },
+
+  removeStudentData(studentId) {
+    const store = readStudentDataStore()
+    delete store.byStudentId[studentId]
+    writeStudentDataStore(store)
   },
 
   exportStudentData(studentId) {
-    // TODO: implement single-student export when real local progress exists.
     return {
       version: STORAGE_VERSION,
       studentId,
-      data: null,
+      data: this.getStudentData(studentId),
     }
   },
 }

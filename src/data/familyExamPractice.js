@@ -21,8 +21,7 @@ export const familyExamPractice = [
     tags: ['family', 'speaking', 'task-3'],
     targetChunks: ['get on well with somebody', 'have a lot in common'],
     difficulty: 'Medium',
-    status: 'Completed',
-    score: '6/7',
+    progressSection: 'Speaking',
     url: '#',
   },
   {
@@ -37,8 +36,7 @@ export const familyExamPractice = [
     tags: ['family', 'reading'],
     targetChunks: ['support each other'],
     difficulty: 'Medium',
-    status: 'To retry',
-    score: '5/7',
+    progressSection: 'Reading',
     url: '#',
   },
 ]

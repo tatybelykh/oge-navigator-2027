@@ -1,8 +1,14 @@
 import { Link } from 'react-router-dom'
-import { getTopicStudentProgress } from '../data/topicStudentProgress'
+import { familyChunks } from '../data/familyChunks'
 import { topics } from '../data/topics'
+import { calculateFamilyProgress } from '../utils/progressCalculator'
 
-export function TopicsPage({ activeStudentId }) {
+export function TopicsPage({ studentData }) {
+  const familyProgress = calculateFamilyProgress({
+    chunks: familyChunks,
+    studentData,
+  }).overall
+
   return (
     <section className="page-stack">
       <header className="page-header">
@@ -16,7 +22,9 @@ export function TopicsPage({ activeStudentId }) {
       <div className="topics-grid" aria-label="Список тем">
         {topics.map((topic) => {
           const isFamily = topic.slug === 'family-relationships'
-          const topicState = getTopicStudentProgress(activeStudentId, topic.id)
+          const topicState = isFamily
+            ? getFamilyTopicState(familyProgress)
+            : getEmptyTopicState()
 
           return (
             <article
@@ -62,4 +70,24 @@ export function TopicsPage({ activeStudentId }) {
       </div>
     </section>
   )
+}
+
+function getFamilyTopicState(progress) {
+  if (progress === 0) {
+    return getEmptyTopicState()
+  }
+
+  return {
+    progress,
+    status: 'В работе',
+    statusType: 'in-progress',
+  }
+}
+
+function getEmptyTopicState() {
+  return {
+    progress: 0,
+    status: 'Не начато',
+    statusType: 'not-started',
+  }
 }

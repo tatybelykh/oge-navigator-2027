@@ -1,197 +1,121 @@
+import { createEmptyStudentData } from '../services/localStorageService'
+
 const studentOneId = 'student-001'
-const studentTwoId = 'student-002'
 
-const studentOneProgress = [
-  { studentId: studentOneId, topicId: 'family', label: 'Vocabulary & Chunks', value: 75 },
-  { studentId: studentOneId, topicId: 'family', label: 'Listening', value: 60 },
-  { studentId: studentOneId, topicId: 'family', label: 'Reading', value: 80 },
-  { studentId: studentOneId, topicId: 'family', label: 'Grammar & Vocabulary', value: 55 },
-  { studentId: studentOneId, topicId: 'family', label: 'Writing', value: 50 },
-  { studentId: studentOneId, topicId: 'family', label: 'Speaking', value: 65 },
-]
-
-const studentTwoProgress = [
-  { studentId: studentTwoId, topicId: 'family', label: 'Vocabulary & Chunks', value: 0 },
-  { studentId: studentTwoId, topicId: 'family', label: 'Listening', value: 0 },
-  { studentId: studentTwoId, topicId: 'family', label: 'Reading', value: 0 },
-  { studentId: studentTwoId, topicId: 'family', label: 'Grammar & Vocabulary', value: 0 },
-  { studentId: studentTwoId, topicId: 'family', label: 'Writing', value: 0 },
-  { studentId: studentTwoId, topicId: 'family', label: 'Speaking', value: 0 },
-]
-
-export const familyStudentData = {
-  [studentOneId]: {
-    studentId: studentOneId,
-    topicProgress: {
+export const studentOneSeedData = {
+  ...createEmptyStudentData(studentOneId),
+  chunkProgress: {
+    'chunk-get-on-well': 'Active',
+    'chunk-common': 'Active',
+    'chunk-close': 'Learning',
+    'chunk-time': 'Active',
+    'chunk-fall-out': 'With help',
+    'chunk-argue': 'Learning',
+    'chunk-support': 'Active',
+    'chunk-get-along': 'Learning',
+    'chunk-good-relationship': 'New',
+    'chunk-advice': 'New',
+    'chunk-care': 'New',
+    'chunk-touch': 'New',
+  },
+  attempts: [
+    {
+      id: 'attempt-seed-speaking-3',
+      studentId: studentOneId,
+      materialId: 'exam-fipi-speaking-3-family',
+      materialTitle: 'Family relationships',
+      materialSourceType: 'fipi',
+      topicId: 'family',
+      section: 'Speaking',
+      completedAt: '2026-08-14T00:00:00.000Z',
+      score: 6,
+      maxScore: 7,
+      percentage: 86,
+      status: 'completed',
+    },
+    {
+      id: 'attempt-seed-reading',
+      studentId: studentOneId,
+      materialId: 'exam-fipi-reading-teenagers',
+      materialTitle: 'Family and teenagers',
+      materialSourceType: 'fipi',
+      topicId: 'family',
+      section: 'Reading',
+      completedAt: '2026-08-14T00:00:00.000Z',
+      score: 5,
+      maxScore: 7,
+      percentage: 71,
+      status: 'retry',
+    },
+  ],
+  errors: [
+    {
+      id: 'error-seed-agree-with',
       studentId: studentOneId,
       topicId: 'family',
-      value: 70,
+      original: 'I am agree with my parents.',
+      correction: 'I agree with my parents.',
+      type: 'Grammar',
+      target: 'agree with somebody',
+      createdAt: '2026-08-14T00:00:00.000Z',
+      status: 'Revision',
+      inRevision: true,
     },
-    stats: {
-      chunks: 12,
-      examPractice: 7,
-      extraPractice: 6,
-      errors: 3,
-      revision: 4,
-    },
-    skillProgress: studentOneProgress,
-    nextSteps: [
-      { id: 'next-revision', studentId: studentOneId, title: 'Revision', description: '4 chunks due' },
-      { id: 'next-speaking-2', studentId: studentOneId, title: 'Speaking Task 2', description: 'Family questions' },
-      { id: 'next-reading', studentId: studentOneId, title: 'Reading', description: '1 task to retry' },
-    ],
-    activity: [
-      { id: 'activity-speaking-3', studentId: studentOneId, title: 'Speaking Task 3', result: '6/7' },
-      { id: 'activity-reading', studentId: studentOneId, title: 'Reading', result: '80%' },
-      { id: 'activity-chunk', studentId: studentOneId, title: 'Chunk practice', result: 'completed' },
-    ],
-    chunkProgress: [
-      { studentId: studentOneId, chunkId: 'chunk-get-on-well', status: 'Active' },
-      { studentId: studentOneId, chunkId: 'chunk-common', status: 'Active' },
-      { studentId: studentOneId, chunkId: 'chunk-close', status: 'Learning' },
-      { studentId: studentOneId, chunkId: 'chunk-time', status: 'Active' },
-      { studentId: studentOneId, chunkId: 'chunk-fall-out', status: 'With help' },
-      { studentId: studentOneId, chunkId: 'chunk-argue', status: 'Learning' },
-      { studentId: studentOneId, chunkId: 'chunk-support', status: 'Active' },
-      { studentId: studentOneId, chunkId: 'chunk-get-along', status: 'Learning' },
-      { studentId: studentOneId, chunkId: 'chunk-good-relationship', status: 'New' },
-      { studentId: studentOneId, chunkId: 'chunk-advice', status: 'New' },
-      { studentId: studentOneId, chunkId: 'chunk-care', status: 'New' },
-      { studentId: studentOneId, chunkId: 'chunk-touch', status: 'New' },
-    ],
-    errors: [
-      {
-        id: 'error-agree-with',
-        studentId: studentOneId,
-        topicId: 'family',
-        original: 'I am agree with my parents.',
-        correction: 'I agree with my parents.',
-        type: 'Grammar',
-        target: 'agree with somebody',
-        date: 'Demo date',
-        status: 'Revision',
-      },
-      {
-        id: 'error-spend-time',
-        studentId: studentOneId,
-        topicId: 'family',
-        original: 'We spend time to watch films.',
-        correction: 'We spend time watching films.',
-        type: 'Grammar / Chunk',
-        target: 'spend time doing something',
-        date: 'Demo date',
-        status: 'Revision',
-      },
-      {
-        id: 'error-friendly',
-        studentId: studentOneId,
-        topicId: 'family',
-        original: 'My brother very friendly.',
-        correction: 'My brother is very friendly.',
-        type: 'Grammar',
-        target: 'to be + adjective',
-        date: 'Demo date',
-        status: 'Learning',
-      },
-    ],
-    revision: {
-      dueToday: 4,
-      items: [
-        {
-          id: 'revision-agree-with',
-          studentId: studentOneId,
-          title: 'agree with somebody',
-          source: 'Error',
-          lastPractised: 'Demo date',
-          status: 'Revision',
-        },
-        {
-          id: 'revision-common',
-          studentId: studentOneId,
-          title: 'have a lot in common',
-          source: 'Chunk',
-          lastPractised: 'Demo date',
-          status: 'Active',
-        },
-        {
-          id: 'revision-spend-time',
-          studentId: studentOneId,
-          title: 'spend time doing something',
-          source: 'Error',
-          lastPractised: 'Demo date',
-          status: 'Revision',
-        },
-        {
-          id: 'revision-fall-out',
-          studentId: studentOneId,
-          title: 'fall out with somebody',
-          source: 'Chunk',
-          lastPractised: 'Demo date',
-          status: 'With help',
-        },
-      ],
-    },
-  },
-  [studentTwoId]: {
-    studentId: studentTwoId,
-    topicProgress: {
-      studentId: studentTwoId,
+    {
+      id: 'error-seed-spend-time',
+      studentId: studentOneId,
       topicId: 'family',
-      value: 0,
+      original: 'We spend time to watch films.',
+      correction: 'We spend time watching films.',
+      type: 'Chunk',
+      target: 'spend time doing something',
+      createdAt: '2026-08-14T00:00:00.000Z',
+      status: 'Revision',
+      inRevision: true,
     },
-    stats: {
-      chunks: 0,
-      examPractice: 0,
-      extraPractice: 0,
-      errors: 0,
-      revision: 0,
+    {
+      id: 'error-seed-friendly',
+      studentId: studentOneId,
+      topicId: 'family',
+      original: 'My brother very friendly.',
+      correction: 'My brother is very friendly.',
+      type: 'Grammar',
+      target: 'to be + adjective',
+      createdAt: '2026-08-14T00:00:00.000Z',
+      status: 'Learning',
+      inRevision: false,
     },
-    skillProgress: studentTwoProgress,
-    nextSteps: [],
-    activity: [],
-    chunkProgress: [],
-    errors: [],
-    revision: {
-      dueToday: 0,
-      items: [],
+  ],
+  revision: [
+    {
+      id: 'revision-seed-common',
+      studentId: studentOneId,
+      sourceType: 'Chunk',
+      sourceId: 'chunk-common',
+      topicId: 'family',
+      title: 'have a lot in common',
+      addedAt: '2026-08-14T00:00:00.000Z',
+      lastPractisedAt: null,
+      status: 'Due',
     },
-  },
+    {
+      id: 'revision-seed-agree-with',
+      studentId: studentOneId,
+      sourceType: 'Error',
+      sourceId: 'error-seed-agree-with',
+      topicId: 'family',
+      title: 'agree with somebody',
+      addedAt: '2026-08-14T00:00:00.000Z',
+      lastPractisedAt: null,
+      status: 'Due',
+    },
+  ],
 }
 
-function createEmptyFamilyStudentData(studentId) {
-  return {
-    studentId,
-    topicProgress: {
-      studentId,
-      topicId: 'family',
-      value: 0,
-    },
-    stats: {
-      chunks: 0,
-      examPractice: 0,
-      extraPractice: 0,
-      errors: 0,
-      revision: 0,
-    },
-    skillProgress: [
-      { studentId, topicId: 'family', label: 'Vocabulary & Chunks', value: 0 },
-      { studentId, topicId: 'family', label: 'Listening', value: 0 },
-      { studentId, topicId: 'family', label: 'Reading', value: 0 },
-      { studentId, topicId: 'family', label: 'Grammar & Vocabulary', value: 0 },
-      { studentId, topicId: 'family', label: 'Writing', value: 0 },
-      { studentId, topicId: 'family', label: 'Speaking', value: 0 },
-    ],
-    nextSteps: [],
-    activity: [],
-    chunkProgress: [],
-    errors: [],
-    revision: {
-      dueToday: 0,
-      items: [],
-    },
+export function getStudentSeedData(studentId) {
+  if (studentId === studentOneId) {
+    return studentOneSeedData
   }
-}
 
-export function getFamilyStudentData(studentId) {
-  return familyStudentData[studentId] ?? createEmptyFamilyStudentData(studentId)
+  return createEmptyStudentData(studentId)
 }

@@ -3,14 +3,11 @@ import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { Dashboard } from './components/Dashboard'
 import {
-  activeChunks,
   featureCards,
   navItems,
-  progressSummary,
-  recentTasks,
-  revisionCard,
 } from './data/dashboardData'
 import { useTheme } from './hooks/useTheme'
+import { useLocalStudentData } from './hooks/useLocalStudentData'
 import { useStudentProfiles } from './hooks/useStudentProfiles'
 import { FamilyTopicPage } from './pages/FamilyTopicPage'
 import { TopicsPage } from './pages/TopicsPage'
@@ -27,6 +24,7 @@ function App() {
     selectStudent,
     students,
   } = useStudentProfiles()
+  const progressActions = useLocalStudentData(activeStudentId)
 
   return (
     <HashRouter>
@@ -37,6 +35,7 @@ function App() {
         onAddStudent={addStudent}
         onCloseMenu={() => setIsMenuOpen(false)}
         onDeleteStudent={deleteStudent}
+        onResetProgress={progressActions.resetProgress}
         onSelectStudent={selectStudent}
         onToggleMenu={() => setIsMenuOpen((isOpen) => !isOpen)}
         onToggleTheme={toggleTheme}
@@ -47,21 +46,23 @@ function App() {
           <Route
             element={
               <Dashboard
-                activeChunks={activeChunks}
                 featureCards={featureCards}
-                progressSummary={progressSummary}
-                recentTasks={recentTasks}
-                revisionCard={revisionCard}
+                studentData={progressActions.studentData}
               />
             }
             path="/"
           />
           <Route
-            element={<TopicsPage activeStudentId={activeStudentId} />}
+            element={<TopicsPage studentData={progressActions.studentData} />}
             path="/topics"
           />
           <Route
-            element={<FamilyTopicPage activeStudentId={activeStudentId} />}
+            element={
+              <FamilyTopicPage
+                activeStudentId={activeStudentId}
+                progressActions={progressActions}
+              />
+            }
             path="/topics/family-relationships"
           />
           <Route element={<Navigate replace to="/" />} path="*" />

@@ -15,7 +15,7 @@ export const familyExtraPractice = [
       'be close to',
     ],
     difficulty: 'Easy',
-    status: 'Ready',
+    progressSection: 'Speaking',
   },
   {
     id: 'extra-family-interview',
@@ -29,7 +29,7 @@ export const familyExtraPractice = [
     tags: ['family', 'speaking-task-2'],
     targetChunks: ['4 target chunks'],
     difficulty: 'Medium',
-    status: 'Ready',
+    progressSection: 'Speaking',
   },
   {
     id: 'extra-family-monologue',
@@ -43,7 +43,7 @@ export const familyExtraPractice = [
     tags: ['family', 'speaking-task-3'],
     targetChunks: ['5 target chunks'],
     difficulty: 'Medium',
-    status: 'Ready',
+    progressSection: 'Speaking',
   },
   {
     id: 'extra-relationships-reading',
@@ -57,7 +57,7 @@ export const familyExtraPractice = [
     tags: ['family', 'reading'],
     targetChunks: ['support each other', 'fall out with somebody'],
     difficulty: 'Medium',
-    status: 'Ready',
+    progressSection: 'Reading',
   },
   {
     id: 'extra-email-about-family',
@@ -71,6 +71,6 @@ export const familyExtraPractice = [
     tags: ['family', 'writing'],
     targetChunks: ['keep in touch with somebody'],
     difficulty: 'Hard',
-    status: 'Ready',
+    progressSection: 'Writing',
   },
 ]

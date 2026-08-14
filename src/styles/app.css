@@ -108,6 +108,7 @@
 .icon-button,
 .theme-toggle,
 .primary-button,
+.primary-link,
 .text-button {
   border: 0;
   border-radius: var(--radius);
@@ -212,7 +213,8 @@
 }
 
 .profile-list,
-.profile-form {
+.profile-form,
+.profile-menu-actions {
   display: grid;
   gap: 8px;
 }
@@ -558,6 +560,9 @@ h2 {
 }
 
 .primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 44px;
   padding: 10px 18px;
   background: var(--accent);
@@ -565,7 +570,20 @@ h2 {
   font-weight: 850;
 }
 
-.primary-button:hover:not(:disabled) {
+.primary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 18px;
+  background: var(--accent);
+  color: white;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.primary-button:hover:not(:disabled),
+.primary-link:hover {
   background: var(--accent-strong);
 }
 
@@ -839,6 +857,92 @@ h2 {
   align-content: start;
   gap: 16px;
   padding: 20px;
+}
+
+.material-actions,
+.revision-actions,
+.profile-form-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.inline-form {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+
+.compact-field,
+.inline-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.compact-field input,
+.compact-field select,
+.inline-form input,
+.inline-form select {
+  min-width: 0;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.score-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: 10px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-weight: 750;
+}
+
+.attempt-summary,
+.attempt-history,
+.history-list {
+  display: grid;
+  gap: 6px;
+}
+
+.attempt-summary {
+  padding: 10px;
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+}
+
+.attempt-summary span,
+.history-list span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.attempt-history summary {
+  cursor: pointer;
+  color: var(--accent-strong);
+  font-weight: 850;
+}
+
+.danger-button {
+  color: var(--warning);
 }
 
 .source-badge.is-fipi {

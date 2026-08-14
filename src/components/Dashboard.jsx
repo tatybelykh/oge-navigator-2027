@@ -1,13 +1,27 @@
-import { ProgressRing } from './ProgressRing'
 import { Link } from 'react-router-dom'
+import { familyChunks } from '../data/familyChunks'
+import {
+  calculateFamilyProgress,
+  getRecentAttempts,
+} from '../utils/progressCalculator'
+import { ProgressRing } from './ProgressRing'
 
-export function Dashboard({
-  activeChunks,
-  featureCards,
-  progressSummary,
-  recentTasks,
-  revisionCard,
-}) {
+export function Dashboard({ featureCards, studentData }) {
+  const progressSummary = calculateFamilyProgress({
+    chunks: familyChunks,
+    studentData,
+  })
+  const recentAttempts = getRecentAttempts(studentData.attempts)
+  const activeChunks = familyChunks
+    .map((chunk) => ({
+      phrase: chunk.chunk,
+      status: studentData.chunkProgress[chunk.id] ?? 'New',
+    }))
+    .filter((chunk) =>
+      ['Active', 'With help', 'Learning'].includes(chunk.status),
+    )
+    .slice(0, 5)
+
   return (
     <>
       <section className="welcome">
@@ -71,12 +85,12 @@ export function Dashboard({
             <h2>На повторение</h2>
           </div>
           <div className="revision-count">
-            <strong>{revisionCard.count}</strong>
-            <span>{revisionCard.label}</span>
+            <strong>{studentData.revision.length}</strong>
+            <span>элементов</span>
           </div>
-          <button className="primary-button" type="button">
+          <Link className="primary-link" to="/topics/family-relationships">
             Перейти
-          </button>
+          </Link>
         </article>
 
         <article className="panel">
@@ -84,17 +98,25 @@ export function Dashboard({
             <p className="eyebrow">Недавние задания</p>
             <h2>Последняя практика</h2>
           </div>
-          <div className="task-list">
-            {recentTasks.map((task) => (
-              <div className="task-item" key={`${task.type}-${task.title}`}>
-                <div>
-                  <span>{task.type}</span>
-                  <strong>{task.title}</strong>
+          {recentAttempts.length > 0 ? (
+            <div className="task-list">
+              {recentAttempts.map((attempt) => (
+                <div className="task-item" key={attempt.id}>
+                  <div>
+                    <span>{attempt.section}</span>
+                    <strong>{attempt.materialTitle}</strong>
+                  </div>
+                  <b>
+                    {attempt.score}/{attempt.maxScore}
+                  </b>
                 </div>
-                <b>{task.result}</b>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-state">
+              Это задание ещё не выполнялось. Здесь появится прогресс после первых заданий.
+            </p>
+          )}
         </article>
 
         <article className="panel">
@@ -102,16 +124,20 @@ export function Dashboard({
             <p className="eyebrow">Активные чанки</p>
             <h2>Фразы в работе</h2>
           </div>
-          <div className="chunk-list">
-            {activeChunks.map((chunk) => (
-              <div className="chunk-item" key={chunk.phrase}>
-                <span>{chunk.phrase}</span>
-                <div className="mini-track" aria-label={`${chunk.progress}%`}>
-                  <span style={{ width: `${chunk.progress}%` }} />
+          {activeChunks.length > 0 ? (
+            <div className="chunk-list">
+              {activeChunks.map((chunk) => (
+                <div className="chunk-item" key={chunk.phrase}>
+                  <span>{chunk.phrase}</span>
+                  <small>{chunk.status}</small>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-state">
+              Здесь появится прогресс после первых заданий.
+            </p>
+          )}
         </article>
       </section>
     </>

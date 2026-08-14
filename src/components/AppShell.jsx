@@ -9,6 +9,7 @@ export function AppShell({
   onAddStudent,
   onCloseMenu,
   onDeleteStudent,
+  onResetProgress,
   onSelectStudent,
   onToggleMenu,
   onToggleTheme,
@@ -48,6 +49,7 @@ export function AppShell({
             activeStudent={activeStudent}
             onAddStudent={onAddStudent}
             onDeleteStudent={onDeleteStudent}
+            onResetProgress={onResetProgress}
             onSelectStudent={onSelectStudent}
             students={students}
           />

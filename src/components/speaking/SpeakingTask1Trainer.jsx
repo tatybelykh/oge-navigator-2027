@@ -211,28 +211,20 @@ export function SpeakingTask1Trainer({
       </article>
 
       {status === 'idle' && (
-        <>
-          <div className="material-grid">
-            <button className="mode-card" onClick={() => chooseMode('training')} type="button">
-              <span>Training Mode</span>
-              <strong>Reading practice with focus hints and local notes</strong>
-            </button>
-            <button className="mode-card" onClick={() => chooseMode('exam')} type="button">
-              <span>Exam Mode</span>
-              <strong>Preparation, reading aloud and teacher scoring</strong>
-            </button>
-            <button className="mode-card" onClick={() => setStatus('mic-check')} type="button">
-              <span>Microphone Check</span>
-              <strong>Record a short local test</strong>
-            </button>
-          </div>
-          <ReadingTextCard
-            focusNotes={focusNotes}
-            material={material}
-            showFocusNotes
-            showHints
-          />
-        </>
+        <div className="material-grid">
+          <button className="mode-card" onClick={() => chooseMode('training')} type="button">
+            <span>Training Mode</span>
+            <strong>Reading practice with focus hints and local notes</strong>
+          </button>
+          <button className="mode-card" onClick={() => chooseMode('exam')} type="button">
+            <span>Exam Mode</span>
+            <strong>Preparation, reading aloud and teacher scoring</strong>
+          </button>
+          <button className="mode-card" onClick={() => setStatus('mic-check')} type="button">
+            <span>Microphone Check</span>
+            <strong>Record a short local test</strong>
+          </button>
+        </div>
       )}
 
       {status === 'mic-check' && <MicrophoneCheck onReady={() => setStatus('idle')} />}
@@ -270,12 +262,6 @@ export function SpeakingTask1Trainer({
               />
             </>
           )}
-          <ReadingTextCard
-            focusNotes={focusNotes}
-            material={material}
-            showFocusNotes={mode === 'training'}
-            showHints={mode === 'training' && showHints}
-          />
           <div className="material-actions">
             <button className="primary-button" onClick={startPreparation} type="button">
               Начать

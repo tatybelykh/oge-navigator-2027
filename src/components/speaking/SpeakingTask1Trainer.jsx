@@ -95,12 +95,8 @@ export function SpeakingTask1Trainer({
     [cleanup],
   )
 
-  const chooseMode = (nextMode) => {
+  const startPreparation = (nextMode = mode) => {
     setMode(nextMode)
-    setStatus('ready')
-  }
-
-  const startPreparation = () => {
     setError('')
     setStatus('preparation')
     setEndAt(Date.now() + speakingTask1Config.prepTimeSeconds * 1000)
@@ -194,57 +190,83 @@ export function SpeakingTask1Trainer({
         ← К заданиям Speaking Task 1
       </button>
 
-      <article className="panel">
+      <article className="panel task1-start-header">
         <div className="panel-heading">
           <p className="eyebrow">Speaking Task 1</p>
           <h1>{material.title}</h1>
-          <p className="welcome-text">{material.description}</p>
+          <p className="welcome-text">Reading aloud practice</p>
         </div>
         <div className="source-row">
           <span className="source-badge is-extra">Extra Practice</span>
           <span className="section-chip">Reading Aloud</span>
           <span className="section-chip">{speakingTask1Config.examModel}</span>
         </div>
-        <p className="empty-state">
-          Запись не отправляется на сервер. После выполнения её можно сохранить на устройство.
-        </p>
       </article>
 
       {status === 'idle' && (
-        <div className="material-grid">
-          <button className="mode-card" onClick={() => chooseMode('training')} type="button">
-            <span>Training Mode</span>
-            <strong>Reading practice with focus hints and local notes</strong>
-          </button>
-          <button className="mode-card" onClick={() => chooseMode('exam')} type="button">
-            <span>Exam Mode</span>
-            <strong>Preparation, reading aloud and teacher scoring</strong>
-          </button>
-          <button className="mode-card" onClick={() => setStatus('mic-check')} type="button">
-            <span>Microphone Check</span>
-            <strong>Record a short local test</strong>
-          </button>
-        </div>
+        <>
+          <div className="task1-mode-grid">
+            <article className="task1-mode-card">
+              <div>
+                <span>Training Mode</span>
+                <h2>Тренировка с подсказками</h2>
+                <p>Practice with optional hints and teacher notes</p>
+              </div>
+              <ul>
+                <li>90 sec preparation</li>
+                <li>up to 2 min reading</li>
+                <li>pronunciation support available</li>
+              </ul>
+              <button className="primary-button" onClick={() => startPreparation('training')} type="button">
+                Начать тренировку
+              </button>
+            </article>
+            <article className="task1-mode-card">
+              <div>
+                <span>Exam Mode</span>
+                <h2>Экзаменационный режим</h2>
+                <p>Exam-style reading aloud</p>
+              </div>
+              <ul>
+                <li>90 sec preparation</li>
+                <li>up to 2 min reading</li>
+                <li>no hints</li>
+              </ul>
+              <button className="primary-button" onClick={() => startPreparation('exam')} type="button">
+                Начать экзаменационный режим
+              </button>
+            </article>
+          </div>
+
+          <article className="task1-mic-check">
+            <div>
+              <span aria-hidden="true">🎙</span>
+              <div>
+                <h2>Microphone Check</h2>
+                <p>Запишите короткий тест перед началом задания.</p>
+              </div>
+            </div>
+            <button className="text-button" onClick={() => setStatus('mic-check')} type="button">
+              Проверить микрофон
+            </button>
+          </article>
+
+          <p className="task1-privacy-note">
+            Аудиозапись не отправляется на сервер и сохраняется только вручную на устройство.
+          </p>
+        </>
       )}
 
       {status === 'mic-check' && <MicrophoneCheck onReady={() => setStatus('idle')} />}
 
       {error && <p className="form-error">{error}</p>}
 
-      {status === 'ready' && (
+      {status === 'preparation' && (
         <article className="question-stage">
           <div className="question-stage__top">
-            <span className="status-pill status-started">
-              {mode === 'training' ? 'Training Mode' : 'Exam Mode'}
-            </span>
+            <span className="status-pill status-started">Preparation</span>
+            <CountdownTimer endAt={endAt} isLowAt={15} onComplete={startReading} />
           </div>
-          {mode === 'exam' && (
-            <div className="source-row">
-              <span className="section-chip">Preparation: 1 min 30 sec</span>
-              <span className="section-chip">Reading aloud: up to 2 min</span>
-              <span className="section-chip">One attempt</span>
-            </div>
-          )}
           {mode === 'training' && (
             <>
               <label className="checkbox-row">
@@ -261,33 +283,6 @@ export function SpeakingTask1Trainer({
                 onSaveFocusNotes={onSaveFocusNotes}
               />
             </>
-          )}
-          <div className="material-actions">
-            <button className="primary-button" onClick={startPreparation} type="button">
-              Начать
-            </button>
-            <button className="text-button danger-button" onClick={() => setStatus('idle')} type="button">
-              Отмена
-            </button>
-          </div>
-        </article>
-      )}
-
-      {status === 'preparation' && (
-        <article className="question-stage">
-          <div className="question-stage__top">
-            <span className="status-pill status-started">Preparation</span>
-            <CountdownTimer endAt={endAt} isLowAt={15} onComplete={startReading} />
-          </div>
-          {mode === 'training' && (
-            <label className="checkbox-row">
-              <input
-                checked={showHints}
-                onChange={(event) => setShowHints(event.target.checked)}
-                type="checkbox"
-              />
-              Показывать подсказки
-            </label>
           )}
           <ReadingTextCard
             focusNotes={focusNotes}

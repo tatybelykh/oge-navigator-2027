@@ -1043,6 +1043,115 @@ button.feature-card:hover,
   font-weight: 600;
 }
 
+.task1-start-header {
+  gap: 12px;
+  padding: 20px 22px;
+}
+
+.task1-start-header .panel-heading {
+  gap: 4px;
+}
+
+.task1-start-header h1 {
+  font-size: 42px;
+}
+
+.task1-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.task1-mode-card,
+.task1-mic-check {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.task1-mode-card {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-height: 260px;
+  padding: 18px;
+}
+
+.task1-mode-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 58%, var(--border));
+  background: var(--surface-soft);
+}
+
+.task1-mode-card span {
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.task1-mode-card h2 {
+  margin: 4px 0;
+  font-size: 26px;
+}
+
+.task1-mode-card p,
+.task1-mic-check p,
+.task1-privacy-note {
+  margin: 0;
+  color: var(--muted);
+}
+
+.task1-mode-card ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.task1-mode-card .primary-button {
+  align-self: end;
+  justify-self: start;
+}
+
+.task1-mic-check {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--bg);
+}
+
+.task1-mic-check > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.task1-mic-check span {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.task1-mic-check h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.task1-privacy-note {
+  font-size: 13px;
+  font-weight: 650;
+}
+
 .question-stage,
 .review-card {
   padding: 22px;
@@ -1363,7 +1472,8 @@ button.feature-card:hover,
   .progress-layout,
   .topics-grid,
   .topic-content-grid,
-  .material-grid {
+  .material-grid,
+  .task1-mode-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1428,6 +1538,24 @@ button.feature-card:hover,
 
   .task-item {
     align-items: flex-start;
+  }
+
+  .task1-start-header h1 {
+    font-size: 34px;
+  }
+
+  .task1-mode-card {
+    min-height: 0;
+  }
+
+  .task1-mode-card .primary-button,
+  .task1-mic-check .text-button {
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  .task1-mic-check {
+    display: grid;
   }
 
   .question-stage__top,

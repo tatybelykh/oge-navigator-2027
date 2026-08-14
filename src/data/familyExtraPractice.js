@@ -1,4 +1,5 @@
 import { familyTask2Sets } from './speaking/familyTask2Sets'
+import { familyTask3Sets } from './speaking/familyTask3Sets'
 
 export const familyExtraPractice = [
   {
@@ -26,6 +27,13 @@ export const familyExtraPractice = [
     tags: ['family', 'speaking-task-2', 'exam-style'],
     progressSection: 'Speaking',
   })),
+  ...familyTask3Sets.map((set) => ({
+    ...set,
+    section: 'Extra Practice',
+    source: 'OGE Navigator',
+    tags: ['family', 'speaking-task-3', 'exam-style'],
+    progressSection: 'Speaking',
+  })),
   {
     id: 'extra-family-interview-placeholder',
     sourceType: 'extra',
@@ -37,20 +45,6 @@ export const familyExtraPractice = [
     title: 'Family Interview',
     tags: ['family', 'speaking-task-2'],
     targetChunks: ['4 target chunks'],
-    difficulty: 'Medium',
-    progressSection: 'Speaking',
-  },
-  {
-    id: 'extra-family-monologue',
-    sourceType: 'extra',
-    source: 'OGE Navigator',
-    topic: 'family',
-    subtopic: 'monologue',
-    section: 'Extra Practice',
-    taskType: 'Speaking Task 3',
-    title: 'Family Monologue',
-    tags: ['family', 'speaking-task-3'],
-    targetChunks: ['5 target chunks'],
     difficulty: 'Medium',
     progressSection: 'Speaking',
   },

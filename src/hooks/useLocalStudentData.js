@@ -100,6 +100,48 @@ export function useLocalStudentData(studentId) {
     })
   }
 
+  const addSpeakingTask3Attempt = ({
+    aspectReview,
+    chunkUsage,
+    criteriaScores,
+    durationSeconds,
+    material,
+    mode,
+    score,
+    selfReview,
+    teacherNotes,
+  }) => {
+    const numericScore = Number(score)
+    const maxScore = 7
+    const attempt = {
+      id: `attempt-${crypto.randomUUID()}`,
+      studentId,
+      materialId: material.id,
+      materialTitle: material.title,
+      materialSourceType: material.sourceType,
+      topicId: material.topicId,
+      taskType: 'speaking-task-3',
+      section: 'Speaking',
+      mode,
+      completedAt: new Date().toISOString(),
+      durationSeconds,
+      score: numericScore,
+      maxScore,
+      percentage: Math.round((numericScore / maxScore) * 100),
+      status: numericScore === maxScore ? 'completed' : 'retry',
+      criteriaScores,
+      aspectReview,
+      teacherNotes,
+      selfReview,
+      chunkUsage,
+    }
+
+    saveStudentData({
+      ...studentData,
+      attempts: [...studentData.attempts, attempt],
+    })
+  }
+
   const addError = ({
     correction,
     inRevision,
@@ -182,12 +224,19 @@ export function useLocalStudentData(studentId) {
     })
   }
 
-  const addRevisionItem = ({ sourceId, sourceType, title }) => {
+  const addRevisionItem = ({ materialId, sourceId, sourceType, taskType, title }) => {
     saveStudentData({
       ...studentData,
       revision: upsertRevisionItem(
         studentData.revision,
-        createRevisionItem({ sourceId, sourceType, studentId, title }),
+        createRevisionItem({
+          materialId,
+          sourceId,
+          sourceType,
+          studentId,
+          taskType,
+          title,
+        }),
       ),
     })
   }
@@ -223,6 +272,7 @@ export function useLocalStudentData(studentId) {
   return {
     addAttempt,
     addSpeakingTask2Attempt,
+    addSpeakingTask3Attempt,
     addError,
     addRevisionItem,
     deleteError,
@@ -235,12 +285,14 @@ export function useLocalStudentData(studentId) {
   }
 }
 
-function createRevisionItem({ sourceId, sourceType, studentId, title }) {
+function createRevisionItem({ materialId, sourceId, sourceType, studentId, taskType, title }) {
   return {
     id: `revision-${sourceType.toLowerCase()}-${sourceId}`,
     studentId,
+    materialId,
     sourceType,
     sourceId,
+    taskType,
     topicId: 'family',
     title,
     addedAt: new Date().toISOString(),

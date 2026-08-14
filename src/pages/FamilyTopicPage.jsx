@@ -411,10 +411,8 @@ function PracticeCard({ attempts, material, onAddAttempt, onAddRevision }) {
       )}
 
       <div className="material-actions">
-        {material.taskType === 'speaking-task-2' ? (
-          <Link className="primary-link" to={`/speaking?set=${material.id}`}>
-            Начать
-          </Link>
+        {['speaking-task-2', 'speaking-task-3'].includes(material.taskType) ? (
+          <SpeakingPracticeLink material={material} />
         ) : (
           <button
             className="primary-button"
@@ -450,6 +448,16 @@ function PracticeCard({ attempts, material, onAddAttempt, onAddRevision }) {
         />
       )}
     </article>
+  )
+}
+
+function SpeakingPracticeLink({ material }) {
+  const taskSearch = material.taskType === 'speaking-task-3' ? 'task=3&' : ''
+
+  return (
+    <Link className="primary-link" to={`/speaking?${taskSearch}set=${material.id}`}>
+      Начать
+    </Link>
   )
 }
 

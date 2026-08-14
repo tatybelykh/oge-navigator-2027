@@ -1,0 +1,83 @@
+export const familyTask3Sets = [
+  {
+    id: 'speaking-task-3-family-relationships',
+    slug: 'family-relationships',
+    topicId: 'family',
+    title: 'Family Relationships',
+    description: 'A monologue about family relationships and spending time together.',
+    prompt: 'You are going to give a talk about family relationships.',
+    planPoints: [
+      'what you enjoy doing together with your family',
+      'what can sometimes cause arguments in a family',
+      'who you usually turn to for advice and why',
+      'what your attitude to spending time with your family is',
+    ],
+    targetChunks: [
+      'spend time together',
+      'get on well with somebody',
+      'argue about something',
+      'turn to somebody for advice',
+      'support each other',
+      'have a good relationship with',
+    ],
+    difficulty: 'Medium',
+    sourceType: 'extra',
+    taskType: 'speaking-task-3',
+    section: 'Speaking',
+  },
+  {
+    id: 'speaking-task-3-friendship',
+    slug: 'friendship',
+    topicId: 'family',
+    title: 'Friendship',
+    description: 'A monologue about friendship and close relationships.',
+    prompt: 'You are going to give a talk about friendship.',
+    planPoints: [
+      'what qualities you value most in a friend',
+      'what you usually enjoy doing with your friends',
+      'why friends sometimes fall out with each other',
+      'what your attitude to friendship is',
+    ],
+    targetChunks: [
+      'have a lot in common',
+      'be close to somebody',
+      'spend time together',
+      'fall out with somebody',
+      'support each other',
+      'keep in touch with somebody',
+    ],
+    difficulty: 'Medium',
+    sourceType: 'extra',
+    taskType: 'speaking-task-3',
+    section: 'Speaking',
+  },
+  {
+    id: 'speaking-task-3-helping-at-home',
+    slug: 'helping-at-home',
+    topicId: 'family',
+    title: 'Helping at Home',
+    description: 'A monologue about household duties and helping at home.',
+    prompt: 'You are going to give a talk about helping at home.',
+    planPoints: [
+      'what household duties you usually have',
+      'why family members should help each other at home',
+      'what household duties can sometimes cause arguments',
+      'what your attitude to doing household chores is',
+    ],
+    targetChunks: [
+      'take care of somebody',
+      'support each other',
+      'argue about something',
+      'spend time doing something',
+      'have a good relationship with',
+    ],
+    difficulty: 'Medium',
+    sourceType: 'extra',
+    taskType: 'speaking-task-3',
+    section: 'Speaking',
+  },
+]
+
+export function getSpeakingTask3Set(setId) {
+  return familyTask3Sets.find((set) => set.id === setId) ?? familyTask3Sets[0]
+}

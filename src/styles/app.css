@@ -405,6 +405,18 @@ h2 {
   overflow: hidden;
 }
 
+button.feature-card {
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+button.feature-card:hover,
+.feature-card.is-selected-card {
+  border-color: var(--accent);
+}
+
 .feature-card p {
   margin-bottom: 0;
   color: var(--muted);

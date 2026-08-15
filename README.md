@@ -31,6 +31,12 @@ npm run dev
 npm run build
 ```
 
+## Онлайн-версия
+
+https://tatybelykh.github.io/oge-navigator-2027/
+
+Прогресс и пользовательские данные хранятся только локально в браузере.
+
 ## Что реализовано сейчас
 
 - React + Vite проект на JavaScript.

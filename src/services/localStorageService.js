@@ -100,6 +100,17 @@ export const localStorageService = {
     })
   },
 
+  getInterfaceMode() {
+    return this.getSettings().interfaceMode ?? 'student'
+  },
+
+  saveInterfaceMode(interfaceMode) {
+    this.saveSettings({
+      ...this.getSettings(),
+      interfaceMode,
+    })
+  },
+
   getSpeakingVoiceURI() {
     return this.getSettings().speakingVoiceURI
   },

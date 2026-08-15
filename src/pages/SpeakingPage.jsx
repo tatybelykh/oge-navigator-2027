@@ -8,7 +8,7 @@ import { familyTask2Sets, getSpeakingTask2Set } from '../data/speaking/familyTas
 import { familyTask3Sets, getSpeakingTask3Set } from '../data/speaking/familyTask3Sets'
 import { getAttemptsForMaterial } from '../utils/progressCalculator'
 
-export function SpeakingPage({ progressActions }) {
+export function SpeakingPage({ interfaceMode, progressActions }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const searchTask = searchParams.get('task')
   const initialSetId = searchParams.get('set')
@@ -42,13 +42,11 @@ export function SpeakingPage({ progressActions }) {
   if (selectedTask1Set) {
     return (
       <SpeakingTask1Trainer
-        focusNotes={
-          progressActions.studentData.speakingTask1FocusNotes?.[selectedTask1Set.id] ?? []
-        }
+        attempts={getAttemptsForMaterial(progressActions.studentData.attempts, selectedTask1Set.id)}
+        interfaceMode={interfaceMode}
         material={selectedTask1Set}
-        onAddError={progressActions.addError}
         onBackToSets={closeSet}
-        onSaveFocusNotes={progressActions.saveSpeakingTask1FocusNotes}
+        onImportFeedback={progressActions.importSpeakingTask1Feedback}
         onSaveResult={progressActions.addSpeakingTask1Attempt}
       />
     )
@@ -125,7 +123,9 @@ export function SpeakingPage({ progressActions }) {
         <SpeakingSetList
           attempts={progressActions.studentData.attempts}
           eyebrow="Task 1"
+          interfaceMode={interfaceMode}
           modeLabel="Reading Aloud"
+          onImportFeedback={progressActions.importSpeakingTask1Feedback}
           onOpen={(setId) => openSet('1', setId)}
           sets={familyTask1Texts}
           typeLabel="Speaking Task 1"
@@ -153,7 +153,16 @@ export function SpeakingPage({ progressActions }) {
   )
 }
 
-function SpeakingSetList({ attempts, eyebrow, modeLabel, onOpen, sets, typeLabel }) {
+function SpeakingSetList({
+  attempts,
+  eyebrow,
+  interfaceMode,
+  modeLabel,
+  onImportFeedback,
+  onOpen,
+  sets,
+  typeLabel,
+}) {
   return (
     <article className="panel">
       <div className="panel-heading">
@@ -164,8 +173,10 @@ function SpeakingSetList({ attempts, eyebrow, modeLabel, onOpen, sets, typeLabel
         {sets.map((set) => (
           <SpeakingSetCard
             attempts={getAttemptsForMaterial(attempts, set.id)}
+            interfaceMode={interfaceMode}
             key={set.id}
             modeLabel={modeLabel}
+            onImportFeedback={onImportFeedback}
             onOpen={() => onOpen(set.id)}
             set={set}
             typeLabel={typeLabel}
@@ -176,8 +187,9 @@ function SpeakingSetList({ attempts, eyebrow, modeLabel, onOpen, sets, typeLabel
   )
 }
 
-function SpeakingSetCard({ attempts, modeLabel, onOpen, set, typeLabel }) {
+function SpeakingSetCard({ attempts, interfaceMode, modeLabel, onImportFeedback, onOpen, set, typeLabel }) {
   const latestAttempt = attempts[0]
+  const feedbackAttempt = attempts.find((attempt) => attempt.teacherFeedback)
 
   return (
     <article className="material-card">
@@ -206,6 +218,13 @@ function SpeakingSetCard({ attempts, modeLabel, onOpen, set, typeLabel }) {
           <span>
             {latestAttempt.status} · {attempts.length} попыток
           </span>
+          {latestAttempt.teacherFeedback && <span className="feedback-badge">Teacher feedback</span>}
+        </div>
+      )}
+      {interfaceMode === 'student' && feedbackAttempt && (
+        <div className="attempt-summary">
+          <strong>Teacher feedback available</strong>
+          <span>{formatAttemptDate(feedbackAttempt.completedAt)} — {feedbackAttempt.score}/{feedbackAttempt.maxScore}</span>
         </div>
       )}
       {attempts.length > 1 && (
@@ -215,15 +234,59 @@ function SpeakingSetCard({ attempts, modeLabel, onOpen, set, typeLabel }) {
             {attempts.map((attempt) => (
               <span key={attempt.id}>
                 {formatAttemptDate(attempt.completedAt)} — {attempt.score}/{attempt.maxScore}
+                {attempt.teacherFeedback ? ' · Teacher feedback' : ''}
               </span>
             ))}
           </div>
         </details>
       )}
+      {interfaceMode === 'student' && onImportFeedback && (
+        <FeedbackImportButton
+          materialId={set.id}
+          onImportFeedback={onImportFeedback}
+        />
+      )}
       <button className="primary-button" onClick={onOpen} type="button">
         Начать
       </button>
     </article>
+  )
+}
+
+function FeedbackImportButton({ materialId, onImportFeedback }) {
+  const [message, setMessage] = useState('')
+
+  const handleImport = async (event) => {
+    const file = event.target.files?.[0]
+
+    if (!file) {
+      return
+    }
+
+    try {
+      const feedback = JSON.parse(await file.text())
+
+      if (feedback.materialId !== materialId) {
+        setMessage('Этот feedback относится к другому тексту.')
+        event.target.value = ''
+        return
+      }
+
+      const result = onImportFeedback(feedback)
+      setMessage(result.message)
+    } catch {
+      setMessage('Не удалось прочитать JSON feedback.')
+    }
+
+    event.target.value = ''
+  }
+
+  return (
+    <label className="text-button import-feedback-button">
+      Импортировать комментарий преподавателя
+      <input accept="application/json" onChange={handleImport} type="file" />
+      {message && <small>{message}</small>}
+    </label>
   )
 }
 

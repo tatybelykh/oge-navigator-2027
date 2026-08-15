@@ -7,6 +7,7 @@ import {
   navItems,
 } from './data/dashboardData'
 import { useTheme } from './hooks/useTheme'
+import { useInterfaceMode } from './hooks/useInterfaceMode'
 import { useLocalStudentData } from './hooks/useLocalStudentData'
 import { useStudentProfiles } from './hooks/useStudentProfiles'
 import { FamilyTopicPage } from './pages/FamilyTopicPage'
@@ -17,6 +18,7 @@ import './styles/app.css'
 function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
+  const { interfaceMode, toggleInterfaceMode } = useInterfaceMode()
   const {
     activeStudent,
     activeStudentId,
@@ -40,8 +42,10 @@ function App() {
         onSelectStudent={selectStudent}
         onToggleMenu={() => setIsMenuOpen((isOpen) => !isOpen)}
         onToggleTheme={toggleTheme}
+        onToggleInterfaceMode={toggleInterfaceMode}
         students={students}
         theme={theme}
+        interfaceMode={interfaceMode}
       >
         <Routes>
           <Route
@@ -67,7 +71,12 @@ function App() {
             path="/topics/family-relationships"
           />
           <Route
-            element={<SpeakingPage progressActions={progressActions} />}
+            element={
+              <SpeakingPage
+                interfaceMode={interfaceMode}
+                progressActions={progressActions}
+              />
+            }
             path="/speaking"
           />
           <Route element={<Navigate replace to="/" />} path="*" />

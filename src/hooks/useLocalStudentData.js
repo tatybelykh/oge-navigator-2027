@@ -146,8 +146,10 @@ export function useLocalStudentData(studentId) {
 
   const addSpeakingTask1Attempt = ({
     addedWords,
+    completedAt = new Date().toISOString(),
     durationSeconds,
     lineSkipped,
+    markedErrors = [],
     material,
     meaningDistortingErrorCount,
     mode,
@@ -155,6 +157,7 @@ export function useLocalStudentData(studentId) {
     phoneticErrorCount,
     score,
     selfReview,
+    teacherFeedback,
     teacherNotes,
     textCompleted,
   }) => {
@@ -170,7 +173,7 @@ export function useLocalStudentData(studentId) {
       taskType: 'speaking-task-1',
       section: 'Speaking',
       mode,
-      completedAt: new Date().toISOString(),
+      completedAt,
       durationSeconds,
       score: numericScore,
       maxScore,
@@ -184,12 +187,100 @@ export function useLocalStudentData(studentId) {
       textCompleted,
       teacherNotes,
       selfReview,
+      markedErrors: markedErrors.map((error) => ({
+        tokenIndex: error.tokenIndex,
+        paragraphIndex: error.paragraphIndex,
+        tokenText: error.tokenText,
+        timestampSeconds: error.timestampSeconds ?? null,
+        errorType: error.errorType,
+        meaningDistorting: Boolean(error.meaningDistorting),
+        correction: error.correction ?? '',
+        note: error.note ?? '',
+      })),
+      teacherFeedback,
+    }
+
+    const errorBankItems = markedErrors
+      .filter((error) => error.addToErrorBank)
+      .map((error) => createMarkedErrorBankItem({
+        error,
+        material,
+        studentId,
+      }))
+    const revisionItems = markedErrors
+      .filter((error) => error.addToRevision)
+      .map((error) =>
+        createRevisionItem({
+          materialId: material.id,
+          sourceId: `task1-mark-${material.id}-${error.tokenIndex}`,
+          sourceType: 'MarkedError',
+          studentId,
+          taskType: 'speaking-task-1',
+          title: error.correction || error.tokenText,
+        }),
+      )
+
+    saveStudentData({
+      ...studentData,
+      attempts: [...studentData.attempts, attempt],
+      errors: [...studentData.errors, ...errorBankItems],
+      revision: revisionItems.reduce(
+        (items, item) => upsertRevisionItem(items, item),
+        studentData.revision,
+      ),
+    })
+  }
+
+  const importSpeakingTask1Feedback = (feedback) => {
+    if (
+      !feedback ||
+      feedback.schemaVersion !== 1 ||
+      feedback.taskType !== 'speaking-task-1' ||
+      !feedback.materialId ||
+      !feedback.completedAt
+    ) {
+      return { ok: false, message: 'Некорректный файл feedback.' }
+    }
+
+    const alreadyImported = studentData.attempts.some(
+      (attempt) =>
+        attempt.materialId === feedback.materialId &&
+        attempt.completedAt === feedback.completedAt,
+    )
+
+    if (alreadyImported) {
+      return { ok: false, message: 'Этот feedback уже импортирован.' }
+    }
+
+    const numericScore = Number(feedback.score)
+    const numericMaxScore = Number(feedback.maxScore || 2)
+    const materialTitle = feedback.materialTitle || feedback.materialId
+    const attempt = {
+      id: `attempt-import-${crypto.randomUUID()}`,
+      studentId,
+      materialId: feedback.materialId,
+      materialTitle,
+      topicId: 'family',
+      taskType: 'speaking-task-1',
+      section: 'Speaking',
+      mode: 'imported-feedback',
+      completedAt: feedback.completedAt,
+      durationSeconds: 0,
+      score: numericScore,
+      maxScore: numericMaxScore,
+      percentage: numericMaxScore > 0 ? Math.round((numericScore / numericMaxScore) * 100) : 0,
+      status: numericScore === numericMaxScore ? 'completed' : 'retry',
+      markedErrors: Array.isArray(feedback.markedErrors) ? feedback.markedErrors : [],
+      teacherFeedback: feedback.teacherFeedback ?? {},
+      importedTeacherFeedback: true,
     }
 
     saveStudentData({
       ...studentData,
       attempts: [...studentData.attempts, attempt],
     })
+
+    return { ok: true, message: 'Feedback импортирован.' }
   }
 
   const addSpeakingTask3Attempt = ({
@@ -380,6 +471,7 @@ export function useLocalStudentData(studentId) {
     addError,
     addRevisionItem,
     deleteError,
+    importSpeakingTask1Feedback,
     removeRevisionItem,
     resetProgress,
     saveSpeakingTask1FocusNotes,
@@ -404,6 +496,24 @@ function createRevisionItem({ materialId, sourceId, sourceType, studentId, taskT
     addedAt: new Date().toISOString(),
     lastPractisedAt: null,
     status: 'Due',
+  }
+}
+
+function createMarkedErrorBankItem({ error, material, studentId }) {
+  return {
+    id: `error-task1-${material.id}-${error.tokenIndex}-${crypto.randomUUID()}`,
+    studentId,
+    topicId: material.topicId ?? 'family',
+    materialId: material.id,
+    source: 'Speaking Task 1',
+    original: error.tokenText,
+    correction: error.correction,
+    type: error.errorType,
+    target: error.correction,
+    note: error.note,
+    createdAt: new Date().toISOString(),
+    status: error.addToRevision ? 'Revision' : 'Learning',
+    inRevision: Boolean(error.addToRevision),
   }
 }
 

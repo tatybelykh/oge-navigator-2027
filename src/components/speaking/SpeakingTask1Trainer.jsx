@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { speakingTask1Config } from '../../data/speaking/task1Config'
+import { MarkedReadingText } from './MarkedReadingText'
 import { MicrophoneCheck } from './MicrophoneCheck'
+import { TeacherFeedbackCard } from './TeacherFeedbackCard'
+import {
+  createMarkedError,
+  formatMarkTime,
+  getCleanMarkedErrors,
+  task1ErrorTypes,
+} from './task1Marking'
 
 const focusHints = [
   'word stress',
@@ -20,21 +28,12 @@ const selfReviewItems = [
   'I pronounced word endings clearly.',
 ]
 
-const task1ErrorTypes = [
-  'Pronunciation',
-  'Word stress',
-  'Sentence stress',
-  'Intonation',
-  'Reading rule',
-  'Other',
-]
-
 export function SpeakingTask1Trainer({
-  focusNotes,
+  attempts = [],
+  interfaceMode,
   material,
-  onAddError,
   onBackToSets,
-  onSaveFocusNotes,
+  onImportFeedback,
   onSaveResult,
 }) {
   const [mode, setMode] = useState(null)
@@ -43,6 +42,7 @@ export function SpeakingTask1Trainer({
   const [error, setError] = useState('')
   const [showHints, setShowHints] = useState(true)
   const [recording, setRecording] = useState(null)
+  const [markedErrors, setMarkedErrors] = useState([])
   const [selfReview, setSelfReview] = useState({})
   const chunksRef = useRef([])
   const discardRecordingRef = useRef(false)
@@ -52,6 +52,8 @@ export function SpeakingTask1Trainer({
   const streamRef = useRef(null)
 
   const isRecording = status === 'reading'
+  const isTeacherMode = interfaceMode === 'teacher'
+  const feedbackAttempt = attempts.find((attempt) => attempt.teacherFeedback)
 
   useEffect(() => {
     recordingRef.current = recording
@@ -165,9 +167,54 @@ export function SpeakingTask1Trainer({
 
   const restartAttempt = () => {
     cleanup({ discard: true })
+    setMarkedErrors([])
     setSelfReview({})
     setStatus('idle')
     setMode(null)
+  }
+
+  const getCurrentTimestamp = useCallback(() => {
+    if (status === 'reading' && recordingStartedAtRef.current) {
+      return Math.max(0, Math.round((Date.now() - recordingStartedAtRef.current) / 1000))
+    }
+
+    return null
+  }, [status])
+
+  const toggleMark = useCallback(
+    (token) => {
+      if (!isTeacherMode) {
+        return
+      }
+
+      setMarkedErrors((currentMarks) => {
+        if (currentMarks.some((mark) => mark.tokenIndex === token.tokenIndex)) {
+          return currentMarks.filter((mark) => mark.tokenIndex !== token.tokenIndex)
+        }
+
+        return [
+          ...currentMarks,
+          createMarkedError({
+            materialId: material.id,
+            paragraphIndex: token.paragraphIndex,
+            timestampSeconds: getCurrentTimestamp(),
+            tokenIndex: token.tokenIndex,
+            tokenText: token.text,
+          }),
+        ]
+      })
+    },
+    [getCurrentTimestamp, isTeacherMode, material.id],
+  )
+
+  const clearMarks = () => {
+    if (markedErrors.length === 0) {
+      return
+    }
+
+    if (window.confirm('Очистить все отметки ошибок для этого чтения?')) {
+      setMarkedErrors([])
+    }
   }
 
   const backToSets = () => {
@@ -277,17 +324,12 @@ export function SpeakingTask1Trainer({
                 />
                 Показывать подсказки
               </label>
-              <TeacherFocusNotes
-                focusNotes={focusNotes}
-                materialId={material.id}
-                onSaveFocusNotes={onSaveFocusNotes}
-              />
             </>
           )}
           <ReadingTextCard
-            focusNotes={focusNotes}
+            canMark={false}
+            markedErrors={markedErrors}
             material={material}
-            showFocusNotes={mode === 'training'}
             showHints={mode === 'training' && showHints}
           />
           <div className="material-actions">
@@ -308,9 +350,11 @@ export function SpeakingTask1Trainer({
             <CountdownTimer endAt={endAt} isLowAt={15} onComplete={finishReading} />
           </div>
           <ReadingTextCard
-            focusNotes={focusNotes}
+            canMark={isTeacherMode}
+            markedErrors={markedErrors}
             material={material}
-            showFocusNotes={mode === 'training'}
+            onClearMarks={clearMarks}
+            onToggleMark={toggleMark}
             showHints={mode === 'training' && showHints}
           />
           <div className="material-actions">
@@ -324,8 +368,12 @@ export function SpeakingTask1Trainer({
       {status === 'completed' && (
         <Task1Completed
           material={material}
+          feedbackAttempt={feedbackAttempt}
+          interfaceMode={interfaceMode}
+          markedErrors={markedErrors}
+          onImportFeedback={onImportFeedback}
           onRestart={restartAttempt}
-          onReview={() => setStatus('review')}
+          onReview={isTeacherMode ? () => setStatus('review') : undefined}
           recording={recording}
           selfReview={selfReview}
           setSelfReview={setSelfReview}
@@ -335,12 +383,11 @@ export function SpeakingTask1Trainer({
       {status === 'review' && (
         <Task1TeacherReview
           material={material}
+          markedErrors={markedErrors}
           mode={mode}
-          onAddError={onAddError}
+          onSetMarkedErrors={setMarkedErrors}
           onSaveResult={(attempt) => {
             onSaveResult(attempt)
-            clearRecording()
-            onBackToSets()
           }}
           recording={recording}
           selfReview={selfReview}
@@ -350,18 +397,34 @@ export function SpeakingTask1Trainer({
   )
 }
 
-function ReadingTextCard({ focusNotes, material, showFocusNotes, showHints }) {
+function ReadingTextCard({
+  canMark,
+  markedErrors,
+  material,
+  onClearMarks,
+  onToggleMark,
+  showHints,
+}) {
   return (
     <article className="review-card reading-text-card">
       <div className="panel-heading">
         <p className="eyebrow">Text for reading aloud</p>
         <h2>{material.title}</h2>
       </div>
-      <div className="reading-text">
-        {material.text.split('\n').map((paragraph) => (
-          <p key={paragraph}>{paragraph}</p>
-        ))}
-      </div>
+      {canMark && (
+        <div className="marked-errors-toolbar">
+          <strong>Marked errors: {markedErrors.length}</strong>
+          <button className="text-button danger-button" onClick={onClearMarks} type="button">
+            Очистить отметки
+          </button>
+        </div>
+      )}
+      <MarkedReadingText
+        canMark={canMark}
+        markedErrors={markedErrors}
+        material={material}
+        onToggleMark={onToggleMark}
+      />
       {showHints && (
         <div className="useful-language">
           <strong>Focus on:</strong>
@@ -374,101 +437,16 @@ function ReadingTextCard({ focusNotes, material, showFocusNotes, showHints }) {
           </div>
         </div>
       )}
-      {showFocusNotes && focusNotes.length > 0 && (
-        <div className="useful-language">
-          <strong>Teacher focus words</strong>
-          <div className="task-list">
-            {focusNotes.map((note) => (
-              <div className="task-item reading-focus-item" key={note.id}>
-                <strong>{note.phrase}</strong>
-                <span>{note.note}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </article>
-  )
-}
-
-function TeacherFocusNotes({ focusNotes, materialId, onSaveFocusNotes }) {
-  const [phrase, setPhrase] = useState('')
-  const [note, setNote] = useState('')
-
-  const addNote = (event) => {
-    event.preventDefault()
-
-    if (!phrase.trim() || !note.trim()) {
-      return
-    }
-
-    onSaveFocusNotes(materialId, [
-      ...focusNotes,
-      {
-        id: `focus-${crypto.randomUUID()}`,
-        note: note.trim(),
-        phrase: phrase.trim(),
-      },
-    ])
-    setPhrase('')
-    setNote('')
-  }
-
-  const deleteNote = (noteId) => {
-    onSaveFocusNotes(
-      materialId,
-      focusNotes.filter((focusNote) => focusNote.id !== noteId),
-    )
-  }
-
-  return (
-    <article className="review-card">
-      <div className="panel-heading">
-        <p className="eyebrow">Режим разметки текста</p>
-        <h2>Teacher focus words</h2>
-      </div>
-      <form className="inline-form" onSubmit={addNote}>
-        <label className="compact-field">
-          Слово/фраза
-          <input
-            onChange={(event) => setPhrase(event.target.value)}
-            placeholder="photographs"
-            value={phrase}
-          />
-        </label>
-        <label className="compact-field">
-          Note
-          <input
-            onChange={(event) => setNote(event.target.value)}
-            placeholder="word stress"
-            value={note}
-          />
-        </label>
-        <button className="primary-button" type="submit">
-          + Добавить слово/фразу
-        </button>
-      </form>
-      {focusNotes.length > 0 && (
-        <div className="question-review-list">
-          {focusNotes.map((focusNote) => (
-            <div className="question-review-item" key={focusNote.id}>
-              <div>
-                <strong>{focusNote.phrase}</strong>
-                <p>{focusNote.note}</p>
-              </div>
-              <button className="text-button danger-button" onClick={() => deleteNote(focusNote.id)} type="button">
-                Удалить
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
     </article>
   )
 }
 
 function Task1Completed({
+  feedbackAttempt,
+  interfaceMode,
+  markedErrors,
   material,
+  onImportFeedback,
   onRestart,
   onReview,
   recording,
@@ -476,6 +454,33 @@ function Task1Completed({
   setSelfReview,
 }) {
   const audioRef = useRef(null)
+  const [importMessage, setImportMessage] = useState('')
+  const isTeacherMode = interfaceMode === 'teacher'
+
+  const handleImport = async (event) => {
+    const file = event.target.files?.[0]
+
+    if (!file) {
+      return
+    }
+
+    try {
+      const feedback = JSON.parse(await file.text())
+
+      if (feedback.materialId !== material.id) {
+        setImportMessage('Этот feedback относится к другому тексту.')
+        event.target.value = ''
+        return
+      }
+
+      const result = onImportFeedback(feedback)
+      setImportMessage(result.message)
+    } catch {
+      setImportMessage('Не удалось прочитать JSON feedback.')
+    }
+
+    event.target.value = ''
+  }
 
   return (
     <article className="question-stage">
@@ -500,20 +505,50 @@ function Task1Completed({
             download={makeTask1FileName(material, recording.mimeType)}
             href={recording.url}
           >
-            Скачать аудио
+            ⬇ Скачать аудио
           </a>
         </div>
       ) : (
         <p className="empty-state">Аудиозапись недоступна для этой попытки.</p>
       )}
-      <SelfReviewPanel selfReview={selfReview} setSelfReview={setSelfReview} />
+      {isTeacherMode && markedErrors.length > 0 && (
+        <p className="empty-state">Marked errors: {markedErrors.length}</p>
+      )}
+      {feedbackAttempt && (
+        <>
+          <button
+            className="text-button"
+            onClick={() => {
+              document
+                .querySelector(`[data-feedback-attempt="${feedbackAttempt.id}"]`)
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }}
+            type="button"
+          >
+            Посмотреть комментарий преподавателя
+          </button>
+          <div data-feedback-attempt={feedbackAttempt.id}>
+            <TeacherFeedbackCard attempt={feedbackAttempt} material={material} />
+          </div>
+        </>
+      )}
+      {!isTeacherMode && (
+        <label className="text-button import-feedback-button">
+          Импортировать комментарий преподавателя
+          <input accept="application/json" onChange={handleImport} type="file" />
+          {importMessage && <small>{importMessage}</small>}
+        </label>
+      )}
+      {isTeacherMode && <SelfReviewPanel selfReview={selfReview} setSelfReview={setSelfReview} />}
       <div className="material-actions">
         <button className="text-button" onClick={onRestart} type="button">
-          Перезаписать
+          Попробовать ещё раз
         </button>
-        <button className="primary-button" onClick={onReview} type="button">
-          Перейти к проверке
-        </button>
+        {isTeacherMode && (
+          <button className="primary-button" onClick={onReview} type="button">
+            Перейти к проверке
+          </button>
+        )}
       </div>
     </article>
   )
@@ -548,16 +583,19 @@ function SelfReviewPanel({ selfReview, setSelfReview }) {
 }
 
 function Task1TeacherReview({
+  markedErrors,
   material,
   mode,
-  onAddError,
+  onSetMarkedErrors,
   onSaveResult,
   recording,
   selfReview,
 }) {
   const [score, setScore] = useState(0)
-  const [phoneticErrorCount, setPhoneticErrorCount] = useState('0')
-  const [meaningDistortingErrorCount, setMeaningDistortingErrorCount] = useState('0')
+  const [phoneticErrorCount, setPhoneticErrorCount] = useState(String(markedErrors.length))
+  const [meaningDistortingErrorCount, setMeaningDistortingErrorCount] = useState(
+    String(markedErrors.filter((error) => error.meaningDistorting).length),
+  )
   const [omittedWords, setOmittedWords] = useState('0')
   const [addedWords, setAddedWords] = useState('0')
   const [lineSkipped, setLineSkipped] = useState(false)
@@ -570,7 +608,15 @@ function Task1TeacherReview({
     sentenceStress: '',
     wordStress: '',
   })
-  const [isErrorFormOpen, setIsErrorFormOpen] = useState(false)
+  const [teacherFeedback, setTeacherFeedback] = useState({
+    overallComment: '',
+    whatWentWell: '',
+    workOn: '',
+  })
+  const [savedFeedbackExport, setSavedFeedbackExport] = useState(null)
+  const audioRef = useRef(null)
+  const suggestedPhoneticErrors = markedErrors.length
+  const suggestedMeaningErrors = markedErrors.filter((error) => error.meaningDistorting).length
   const recommendedScore = getRecommendedScore({
     addedWords,
     lineSkipped,
@@ -579,6 +625,82 @@ function Task1TeacherReview({
     phoneticErrorCount,
     textCompleted,
   })
+
+  useEffect(() => {
+    setMeaningDistortingErrorCount(String(suggestedMeaningErrors))
+  }, [suggestedMeaningErrors])
+
+  const updateMarkedError = (tokenIndex, updates) => {
+    onSetMarkedErrors((currentMarks) =>
+      currentMarks.map((error) =>
+        error.tokenIndex === tokenIndex ? { ...error, ...updates } : error,
+      ),
+    )
+  }
+
+  const toggleReviewMark = (token) => {
+    onSetMarkedErrors((currentMarks) => {
+      if (currentMarks.some((mark) => mark.tokenIndex === token.tokenIndex)) {
+        return currentMarks.filter((mark) => mark.tokenIndex !== token.tokenIndex)
+      }
+
+      return [
+        ...currentMarks,
+        createMarkedError({
+          materialId: material.id,
+          paragraphIndex: token.paragraphIndex,
+          timestampSeconds: audioRef.current ? Math.round(audioRef.current.currentTime) : null,
+          tokenIndex: token.tokenIndex,
+          tokenText: token.text,
+        }),
+      ]
+    })
+  }
+
+  const playFromMark = (timestampSeconds) => {
+    if (!audioRef.current || timestampSeconds === null || timestampSeconds === undefined) {
+      return
+    }
+
+    audioRef.current.currentTime = Math.max(0, timestampSeconds - 1)
+    audioRef.current.play()
+  }
+
+  const buildAttempt = () => ({
+    addedWords,
+    completedAt: new Date().toISOString(),
+    durationSeconds: recording?.durationSeconds ?? 0,
+    lineSkipped,
+    markedErrors,
+    material,
+    meaningDistortingErrorCount,
+    mode,
+    omittedWords,
+    phoneticErrorCount,
+    score,
+    selfReview,
+    teacherFeedback,
+    teacherNotes,
+    textCompleted,
+  })
+
+  const buildFeedbackExport = (attempt) => ({
+    schemaVersion: 1,
+    materialId: material.id,
+    materialTitle: material.title,
+    taskType: 'speaking-task-1',
+    completedAt: attempt.completedAt,
+    score: Number(attempt.score),
+    maxScore: speakingTask1Config.maxScore,
+    markedErrors: getCleanMarkedErrors(attempt.markedErrors),
+    teacherFeedback: attempt.teacherFeedback,
+  })
+
+  const saveAttempt = () => {
+    const attempt = buildAttempt()
+    onSaveResult(attempt)
+    setSavedFeedbackExport(buildFeedbackExport(attempt))
+  }
 
   return (
     <section className="page-stack">
@@ -591,7 +713,7 @@ function Task1TeacherReview({
         </div>
         {recording?.url && (
           <div className="audio-review-row">
-            <audio controls src={recording.url}>
+            <audio controls ref={audioRef} src={recording.url}>
               <track kind="captions" />
             </audio>
             <a
@@ -632,12 +754,137 @@ function Task1TeacherReview({
         </p>
       </article>
 
+      <article className="review-card reading-text-card">
+        <div className="review-card__header">
+          <h2>Interactive reading text</h2>
+          <span>Marked errors: {markedErrors.length}</span>
+        </div>
+        <MarkedReadingText
+          canMark
+          markedErrors={markedErrors}
+          material={material}
+          onToggleMark={toggleReviewMark}
+        />
+      </article>
+
+      <article className="review-card">
+        <div className="review-card__header">
+          <h2>Correction Work</h2>
+          <span>{markedErrors.length} marked</span>
+        </div>
+        {markedErrors.length === 0 ? (
+          <p className="empty-state">Click words in the reading text to mark errors.</p>
+        ) : (
+          <div className="correction-work-list">
+            {markedErrors
+              .slice()
+              .sort((left, right) => left.tokenIndex - right.tokenIndex)
+              .map((error, index) => (
+                <article className="correction-work-item" key={error.id ?? error.tokenIndex}>
+                  <div className="correction-word-row">
+                    <strong>
+                      {index + 1}. {error.tokenText}
+                    </strong>
+                    {error.timestampSeconds !== null && error.timestampSeconds !== undefined && (
+                      <button
+                        className="text-button"
+                        onClick={() => playFromMark(error.timestampSeconds)}
+                        type="button"
+                      >
+                        ▶ {formatMarkTime(error.timestampSeconds)}
+                      </button>
+                    )}
+                  </div>
+                  <div className="correction-fields">
+                    <label className="compact-field">
+                      Error type
+                      <select
+                        onChange={(event) =>
+                          updateMarkedError(error.tokenIndex, { errorType: event.target.value })
+                        }
+                        value={error.errorType}
+                      >
+                        {task1ErrorTypes.map((errorType) => (
+                          <option key={errorType} value={errorType}>
+                            {errorType}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="checkbox-row">
+                      <input
+                        checked={Boolean(error.meaningDistorting)}
+                        onChange={(event) =>
+                          updateMarkedError(error.tokenIndex, {
+                            meaningDistorting: event.target.checked,
+                          })
+                        }
+                        type="checkbox"
+                      />
+                      Meaning-distorting
+                    </label>
+                    <label className="compact-field">
+                      Correction / model
+                      <input
+                        onChange={(event) =>
+                          updateMarkedError(error.tokenIndex, { correction: event.target.value })
+                        }
+                        placeholder="PHOtographs"
+                        value={error.correction}
+                      />
+                    </label>
+                    <label className="compact-field">
+                      Teacher note
+                      <input
+                        onChange={(event) =>
+                          updateMarkedError(error.tokenIndex, { note: event.target.value })
+                        }
+                        placeholder="stress on the first syllable"
+                        value={error.note}
+                      />
+                    </label>
+                    <label className="checkbox-row">
+                      <input
+                        checked={Boolean(error.addToErrorBank)}
+                        onChange={(event) =>
+                          updateMarkedError(error.tokenIndex, {
+                            addToErrorBank: event.target.checked,
+                          })
+                        }
+                        type="checkbox"
+                      />
+                      + Добавить в Error Bank
+                    </label>
+                    <label className="checkbox-row">
+                      <input
+                        checked={Boolean(error.addToRevision)}
+                        onChange={(event) =>
+                          updateMarkedError(error.tokenIndex, {
+                            addToRevision: event.target.checked,
+                          })
+                        }
+                        type="checkbox"
+                      />
+                      Добавить в Revision
+                    </label>
+                  </div>
+                </article>
+              ))}
+          </div>
+        )}
+      </article>
+
       <article className="review-card">
         <div className="review-card__header">
           <h2>Teacher score</h2>
           <span>Manual score</span>
         </div>
         <ScoreSelector max={speakingTask1Config.maxScore} onChange={setScore} value={score} />
+        <p className="empty-state">
+          Suggested phonetic errors: {suggestedPhoneticErrors}. Suggested meaning-distorting:
+          {' '}
+          {suggestedMeaningErrors}.
+        </p>
         <div className="score-row reading-score-grid">
           <NumberField
             label="Phonetic errors"
@@ -674,8 +921,8 @@ function Task1TeacherReview({
 
       <article className="review-card">
         <div className="review-card__header">
-          <h2>Teacher notes</h2>
-          <span>Pronunciation details</span>
+          <h2>Assessment fields</h2>
+          <span>Internal teacher notes</span>
         </div>
         {[
           ['pronunciation', 'Pronunciation'],
@@ -694,111 +941,46 @@ function Task1TeacherReview({
         ))}
       </article>
 
-      <div className="review-actions">
-        <button className="text-button" onClick={() => setIsErrorFormOpen(true)} type="button">
-          + Добавить ошибку
-        </button>
-      </div>
-
-      {isErrorFormOpen && (
-        <SpeakingTask1ErrorForm
-          materialId={material.id}
-          onCancel={() => setIsErrorFormOpen(false)}
-          onSave={(error) => {
-            onAddError(error)
-            setIsErrorFormOpen(false)
-          }}
+      <article className="review-card">
+        <div className="review-card__header">
+          <h2>Teacher Feedback</h2>
+          <span>Visible to student</span>
+        </div>
+        <NoteField
+          label="What went well"
+          onChange={(value) => setTeacherFeedback((current) => ({ ...current, whatWentWell: value }))}
+          value={teacherFeedback.whatWentWell}
         />
-      )}
+        <NoteField
+          label="Work on"
+          onChange={(value) => setTeacherFeedback((current) => ({ ...current, workOn: value }))}
+          value={teacherFeedback.workOn}
+        />
+        <NoteField
+          label="Overall comment"
+          onChange={(value) => setTeacherFeedback((current) => ({ ...current, overallComment: value }))}
+          value={teacherFeedback.overallComment}
+        />
+      </article>
 
       <button
         className="primary-button"
-        onClick={() =>
-          onSaveResult({
-            addedWords,
-            durationSeconds: recording?.durationSeconds ?? 0,
-            lineSkipped,
-            material,
-            meaningDistortingErrorCount,
-            mode,
-            omittedWords,
-            phoneticErrorCount,
-            score,
-            selfReview,
-            teacherNotes,
-            textCompleted,
-          })
-        }
+        onClick={saveAttempt}
         type="button"
       >
         Сохранить результат
       </button>
+
+      {savedFeedbackExport && (
+        <a
+          className="text-button"
+          download={makeFeedbackFileName(material)}
+          href={createJsonDownloadHref(savedFeedbackExport)}
+        >
+          Экспортировать feedback
+        </a>
+      )}
     </section>
-  )
-}
-
-function SpeakingTask1ErrorForm({ materialId, onCancel, onSave }) {
-  const [original, setOriginal] = useState('')
-  const [correction, setCorrection] = useState('')
-  const [type, setType] = useState('Pronunciation')
-  const [target, setTarget] = useState('')
-  const [inRevision, setInRevision] = useState(true)
-
-  return (
-    <form
-      className="inline-form"
-      onSubmit={(event) => {
-        event.preventDefault()
-        onSave({
-          correction,
-          inRevision,
-          materialId,
-          original,
-          source: 'Speaking Task 1',
-          target,
-          type,
-        })
-      }}
-    >
-      <label className="compact-field">
-        Word / phrase
-        <input onChange={(event) => setOriginal(event.target.value)} required value={original} />
-      </label>
-      <label className="compact-field">
-        Correction / note
-        <input onChange={(event) => setCorrection(event.target.value)} required value={correction} />
-      </label>
-      <label className="compact-field">
-        Type
-        <select onChange={(event) => setType(event.target.value)} value={type}>
-          {task1ErrorTypes.map((errorType) => (
-            <option key={errorType} value={errorType}>
-              {errorType}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="compact-field">
-        Target
-        <input onChange={(event) => setTarget(event.target.value)} value={target} />
-      </label>
-      <label className="checkbox-row">
-        <input
-          checked={inRevision}
-          onChange={(event) => setInRevision(event.target.checked)}
-          type="checkbox"
-        />
-        Добавить в Revision
-      </label>
-      <div className="profile-form-actions">
-        <button className="primary-button" type="submit">
-          Сохранить
-        </button>
-        <button className="text-button" onClick={onCancel} type="button">
-          Отмена
-        </button>
-      </div>
-    </form>
   )
 }
 
@@ -927,4 +1109,17 @@ function makeTask1FileName(material, mimeType) {
   const safeTitle = material.title.replaceAll(' ', '-')
 
   return `OGE_Task1_${safeTitle}_${date}.${extension}`
+}
+
+function makeFeedbackFileName(material) {
+  const date = new Date().toISOString().slice(0, 10)
+  const safeTitle = material.title.replaceAll(' ', '-')
+
+  return `OGE_Task1_feedback_${safeTitle}_${date}.json`
+}
+
+function createJsonDownloadHref(value) {
+  return `data:application/json;charset=utf-8,${encodeURIComponent(
+    JSON.stringify(value, null, 2),
+  )}`
 }

@@ -4,6 +4,7 @@ import { ProfileSwitcher } from './ProfileSwitcher'
 export function AppShell({
   activeStudent,
   children,
+  interfaceMode,
   isMenuOpen,
   navItems,
   onAddStudent,
@@ -13,6 +14,7 @@ export function AppShell({
   onSelectStudent,
   onToggleMenu,
   onToggleTheme,
+  onToggleInterfaceMode,
   students,
   theme,
 }) {
@@ -43,6 +45,16 @@ export function AppShell({
           >
             <span className={theme === 'light' ? 'is-selected' : ''}>Light</span>
             <span className={theme === 'dark' ? 'is-selected' : ''}>Dark</span>
+          </button>
+
+          <button
+            aria-label="Переключить режим интерфейса"
+            className="theme-toggle interface-toggle"
+            onClick={onToggleInterfaceMode}
+            type="button"
+          >
+            <span className={interfaceMode === 'student' ? 'is-selected' : ''}>Student</span>
+            <span className={interfaceMode === 'teacher' ? 'is-selected' : ''}>Teacher</span>
           </button>
 
           <ProfileSwitcher

@@ -103,6 +103,7 @@
   top: 0;
   z-index: 20;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   justify-content: flex-end;
@@ -1421,6 +1422,141 @@ button.feature-card:hover,
   flex: 0 0 auto;
 }
 
+.interface-toggle {
+  width: 178px;
+}
+
+.marked-errors-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+}
+
+.interactive-reading-text p {
+  white-space: normal;
+}
+
+.reading-token {
+  display: inline;
+  min-width: 0;
+  padding: 1px 2px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: default;
+  font: inherit;
+  line-height: inherit;
+  text-align: inherit;
+}
+
+.reading-token:disabled {
+  color: inherit;
+}
+
+.interactive-reading-text.can-mark .reading-token:not(.is-marked) {
+  cursor: pointer;
+}
+
+.interactive-reading-text.can-mark .reading-token:not(.is-marked):hover {
+  background: color-mix(in srgb, var(--warning) 18%, transparent);
+}
+
+.reading-token.is-marked {
+  background: color-mix(in srgb, #f87171 28%, var(--surface));
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, #ef4444 65%, var(--surface));
+  color: var(--text);
+}
+
+:root[data-theme='dark'] .reading-token.is-marked {
+  background: color-mix(in srgb, #fb7185 34%, var(--surface));
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, #fda4af 70%, var(--surface));
+}
+
+.correction-work-list,
+.feedback-word-list {
+  display: grid;
+  gap: 12px;
+}
+
+.correction-work-item {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+}
+
+.correction-word-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.correction-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.teacher-feedback-card {
+  gap: 16px;
+}
+
+.feedback-section {
+  display: grid;
+  gap: 6px;
+}
+
+.feedback-section p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.feedback-word-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+}
+
+.feedback-word-item small,
+.feedback-badge {
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.import-feedback-button {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  width: fit-content;
+}
+
+.import-feedback-button input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.import-feedback-button small {
+  color: var(--muted);
+}
+
 @media (max-width: 980px) {
   .app-shell {
     display: block;
@@ -1500,6 +1636,10 @@ button.feature-card:hover,
     justify-self: center;
     width: min(220px, 72vw);
   }
+
+  .correction-fields {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 560px) {
@@ -1513,6 +1653,14 @@ button.feature-card:hover,
 
   .theme-toggle {
     width: 116px;
+  }
+
+  .interface-toggle {
+    width: 138px;
+  }
+
+  .interface-toggle span {
+    font-size: 12px;
   }
 
   .profile-trigger {
@@ -1571,6 +1719,12 @@ button.feature-card:hover,
 
   .reading-score-grid {
     grid-template-columns: 1fr;
+  }
+
+  .marked-errors-toolbar,
+  .correction-word-row {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .stats-grid {

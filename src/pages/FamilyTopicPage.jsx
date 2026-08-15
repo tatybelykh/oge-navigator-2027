@@ -332,34 +332,40 @@ function ChunksTab({
   const [showExamples, setShowExamples] = useState(true)
 
   return (
-    <article className="panel">
+    <article className="panel chunks-panel">
       <div className="panel-heading">
         <p className="eyebrow">Chunks</p>
         <h2>Фразы темы</h2>
       </div>
-      <div className="filter-row" aria-label="Фильтр chunks">
-        {chunkFilters.map((filter) => (
-          <button
-            className={`filter-button ${chunkFilter === filter ? 'is-active' : ''}`}
-            key={filter}
-            onClick={() => onFilterChange(filter)}
-            type="button"
-          >
-            {filter}
-          </button>
-        ))}
+      <div className="chunk-filter-group">
+        <span className="chunk-filter-label">Статус</span>
+        <div className="filter-row" aria-label="Фильтр chunks">
+          {chunkFilters.map((filter) => (
+            <button
+              className={`filter-button ${chunkFilter === filter ? 'is-active' : ''}`}
+              key={filter}
+              onClick={() => onFilterChange(filter)}
+              type="button"
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
       </div>
-      <div className="filter-row" aria-label="Фильтр subtopic">
-        {subtopicFilters.map((filter) => (
-          <button
-            className={`filter-button ${subtopicFilter === filter.id ? 'is-active' : ''}`}
-            key={filter.id}
-            onClick={() => onSubtopicFilterChange(filter.id)}
-            type="button"
-          >
-            {filter.label}
-          </button>
-        ))}
+      <div className="chunk-filter-group">
+        <span className="chunk-filter-label">Подтема</span>
+        <div className="filter-row" aria-label="Фильтр subtopic">
+          {subtopicFilters.map((filter) => (
+            <button
+              className={`filter-button ${subtopicFilter === filter.id ? 'is-active' : ''}`}
+              key={filter.id}
+              onClick={() => onSubtopicFilterChange(filter.id)}
+              type="button"
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
       </div>
       <label className="checkbox-row">
         <input
@@ -370,7 +376,7 @@ function ChunksTab({
         Show examples
       </label>
 
-      <div className="material-grid">
+      <div className="material-grid chunk-card-grid">
         {chunks.map((chunk) => {
           const isInRevision = revision.some(
             (item) =>
@@ -379,20 +385,22 @@ function ChunksTab({
           )
 
           return (
-            <article className="material-card" key={chunk.id}>
-              <span className="status-pill status-started">{chunk.status}</span>
-              <h2>{chunk.text}</h2>
-              <p>{chunk.meaning}</p>
-              {showExamples && <p className="empty-state">{chunk.example}</p>}
+            <article className="material-card chunk-card" key={chunk.id}>
+              <div className="chunk-card__top">
+                <h2>{chunk.text}</h2>
+                <span className="status-pill status-started chunk-status-badge">{chunk.status}</span>
+              </div>
+              <p className="chunk-meaning">{chunk.meaning}</p>
+              {showExamples && <p className="chunk-example">{chunk.example}</p>}
               <div className="section-chip-row">
                 {chunk.subtopics.map((subtopic) => (
-                  <span className="section-chip" key={subtopic}>
+                  <span className="section-chip chunk-subtopic-chip" key={subtopic}>
                     {familySubtopics.find((item) => item.id === subtopic)?.label ?? subtopic}
                   </span>
                 ))}
               </div>
-              <label className="compact-field">
-                Статус
+              <label className="chunk-status-control">
+                <span>Статус:</span>
                 <select
                   onChange={(event) => onStatusChange(chunk.id, event.target.value)}
                   value={chunk.status}
@@ -405,7 +413,7 @@ function ChunksTab({
                 </select>
               </label>
               <button
-                className="text-button"
+                className={`text-button chunk-revision-action ${isInRevision ? 'is-added' : ''}`}
                 disabled={isInRevision}
                 onClick={() =>
                   onAddRevision({
@@ -420,7 +428,7 @@ function ChunksTab({
                 }
                 type="button"
               >
-                {isInRevision ? '✓ В Revision' : 'В Revision'}
+                {isInRevision ? '✓ В Revision' : '+ В Revision'}
               </button>
             </article>
           )

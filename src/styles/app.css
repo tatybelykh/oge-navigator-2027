@@ -898,6 +898,111 @@ button.feature-card:hover,
   padding: 20px;
 }
 
+.chunks-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.chunks-panel .panel-heading {
+  margin-bottom: 4px;
+}
+
+.chunk-filter-group {
+  display: grid;
+  gap: 6px;
+}
+
+.chunk-filter-label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.chunk-card-grid {
+  margin-top: 2px;
+}
+
+.chunk-card {
+  gap: 10px;
+  padding: 16px;
+}
+
+.chunk-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chunk-card__top h2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.chunk-status-badge {
+  flex: 0 0 auto;
+}
+
+.chunk-meaning {
+  margin: 0;
+  color: var(--muted);
+}
+
+.chunk-example {
+  margin: -2px 0 0;
+  color: color-mix(in srgb, var(--text) 72%, var(--muted));
+  font-style: italic;
+  font-weight: 650;
+}
+
+.chunk-card .section-chip-row {
+  gap: 8px;
+  padding-bottom: 0;
+}
+
+.chunk-subtopic-chip {
+  min-height: 24px;
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.chunk-status-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.chunk-status-control select {
+  min-height: 34px;
+  width: 150px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.chunk-revision-action {
+  width: fit-content;
+  margin-top: 2px;
+}
+
+.chunk-revision-action.is-added {
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  background: var(--mint-soft);
+  color: var(--mint);
+  opacity: 1;
+}
+
 .material-actions,
 .revision-actions,
 .profile-form-actions {
@@ -1637,6 +1742,10 @@ button.feature-card:hover,
     width: min(220px, 72vw);
   }
 
+  .chunk-card__top {
+    flex-wrap: wrap;
+  }
+
   .correction-fields {
     grid-template-columns: 1fr;
   }
@@ -1735,6 +1844,19 @@ button.feature-card:hover,
   .material-card,
   .error-card {
     padding: 18px;
+  }
+
+  .chunk-card {
+    padding: 14px;
+  }
+
+  .chunk-status-control {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .chunk-status-control select {
+    width: 100%;
   }
 
   .revision-task {

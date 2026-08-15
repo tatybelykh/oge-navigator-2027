@@ -35,12 +35,12 @@ const tabs = [
   'Revision',
 ]
 
-const chunkFilters = ['All', 'New', 'Learning', 'With help', 'Active']
+const chunkFilters = ['All', 'New', 'Learning', 'Active']
 const subtopicFilters = [
   { id: 'all', label: 'All' },
   ...familySubtopics.map((subtopic) => ({ id: subtopic.id, label: subtopic.label })),
 ]
-const chunkStatuses = ['New', 'Learning', 'With help', 'Active']
+const chunkStatuses = ['New', 'Learning', 'Active']
 const errorTypes = [
   'Grammar',
   'Vocabulary',
@@ -74,7 +74,9 @@ export function FamilyTopicPage({ activeStudentId, progressActions }) {
     () =>
       familyChunks.map((chunk) => ({
         ...chunk,
-        status: studentData.chunkProgress[chunk.id] ?? 'New',
+        status: studentData.chunkProgress[chunk.id] === 'With help'
+          ? 'Learning'
+          : studentData.chunkProgress[chunk.id] ?? 'New',
         studentId: activeStudentId,
       })),
     [activeStudentId, studentData.chunkProgress],
@@ -147,6 +149,7 @@ export function FamilyTopicPage({ activeStudentId, progressActions }) {
           onFilterChange={setChunkFilter}
           onStatusChange={progressActions.updateChunkStatus}
           onSubtopicFilterChange={setSubtopicFilter}
+          revision={studentData.revision}
           subtopicFilter={subtopicFilter}
         />
       )}
@@ -323,6 +326,7 @@ function ChunksTab({
   onFilterChange,
   onStatusChange,
   onSubtopicFilterChange,
+  revision,
   subtopicFilter,
 }) {
   const [showExamples, setShowExamples] = useState(true)
@@ -367,47 +371,60 @@ function ChunksTab({
       </label>
 
       <div className="material-grid">
-        {chunks.map((chunk) => (
-          <article className="material-card" key={chunk.id}>
-            <span className="status-pill status-started">{chunk.status}</span>
-            <h2>{chunk.text}</h2>
-            <p>{chunk.meaning}</p>
-            {showExamples && <p className="empty-state">{chunk.example}</p>}
-            <div className="section-chip-row">
-              {chunk.subtopics.map((subtopic) => (
-                <span className="section-chip" key={subtopic}>
-                  {familySubtopics.find((item) => item.id === subtopic)?.label ?? subtopic}
-                </span>
-              ))}
-            </div>
-            <label className="compact-field">
-              Статус
-              <select
-                onChange={(event) => onStatusChange(chunk.id, event.target.value)}
-                value={chunk.status}
-              >
-                {chunkStatuses.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
+        {chunks.map((chunk) => {
+          const isInRevision = revision.some(
+            (item) =>
+              item.chunkId === chunk.id ||
+              (item.sourceId === chunk.id && item.sourceType?.toLowerCase() === 'chunk'),
+          )
+
+          return (
+            <article className="material-card" key={chunk.id}>
+              <span className="status-pill status-started">{chunk.status}</span>
+              <h2>{chunk.text}</h2>
+              <p>{chunk.meaning}</p>
+              {showExamples && <p className="empty-state">{chunk.example}</p>}
+              <div className="section-chip-row">
+                {chunk.subtopics.map((subtopic) => (
+                  <span className="section-chip" key={subtopic}>
+                    {familySubtopics.find((item) => item.id === subtopic)?.label ?? subtopic}
+                  </span>
                 ))}
-              </select>
-            </label>
-            <button
-              className="text-button"
-              onClick={() =>
-                onAddRevision({
-                  sourceId: chunk.id,
-                  sourceType: 'Chunk',
-                  title: chunk.chunk,
-                })
-              }
-              type="button"
-            >
-              В Revision
-            </button>
-          </article>
-        ))}
+              </div>
+              <label className="compact-field">
+                Статус
+                <select
+                  onChange={(event) => onStatusChange(chunk.id, event.target.value)}
+                  value={chunk.status}
+                >
+                  {chunkStatuses.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                className="text-button"
+                disabled={isInRevision}
+                onClick={() =>
+                  onAddRevision({
+                    chunkId: chunk.id,
+                    example: chunk.example,
+                    meaning: chunk.meaning,
+                    sourceId: chunk.id,
+                    sourceType: 'chunk',
+                    text: chunk.text,
+                    title: chunk.text,
+                  })
+                }
+                type="button"
+              >
+                {isInRevision ? '✓ В Revision' : 'В Revision'}
+              </button>
+            </article>
+          )
+        })}
       </div>
     </article>
   )

@@ -1,7 +1,6 @@
 const chunkStatusValue = {
   New: 0,
   Learning: 35,
-  'With help': 65,
   Active: 100,
 }
 
@@ -63,7 +62,13 @@ export function calculateChunkProgress({ chunkProgress, chunks }) {
   }
 
   return average(
-    chunks.map((chunk) => chunkStatusValue[chunkProgress[chunk.id] ?? 'New']),
+    chunks.map((chunk) => {
+      const status = chunkProgress[chunk.id] === 'With help'
+        ? 'Learning'
+        : chunkProgress[chunk.id] ?? 'New'
+
+      return chunkStatusValue[status] ?? chunkStatusValue.New
+    }),
   )
 }
 

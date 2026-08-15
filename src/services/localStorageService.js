@@ -70,9 +70,18 @@ function normalizeStudentData(studentId, data) {
     attempts: Array.isArray(data?.attempts) ? data.attempts : [],
     errors: Array.isArray(data?.errors) ? data.errors : [],
     revision: Array.isArray(data?.revision) ? data.revision : [],
-    chunkProgress: data?.chunkProgress ?? {},
+    chunkProgress: normalizeChunkProgress(data?.chunkProgress ?? {}),
     topicProgress: data?.topicProgress ?? {},
   }
+}
+
+function normalizeChunkProgress(chunkProgress) {
+  return Object.fromEntries(
+    Object.entries(chunkProgress).map(([chunkId, status]) => [
+      chunkId,
+      status === 'With help' ? 'Learning' : status,
+    ]),
+  )
 }
 
 export const localStorageService = {
@@ -169,7 +178,11 @@ export const localStorageService = {
     const existingData = store.byStudentId[studentId]
 
     if (existingData) {
-      return normalizeStudentData(studentId, existingData)
+      const normalizedData = normalizeStudentData(studentId, existingData)
+      store.byStudentId[studentId] = normalizedData
+      writeStudentDataStore(store)
+
+      return normalizedData
     }
 
     const initialData = normalizeStudentData(

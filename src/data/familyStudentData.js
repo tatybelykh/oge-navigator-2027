@@ -9,7 +9,7 @@ export const studentOneSeedData = {
     'chunk-common': 'Active',
     'chunk-close': 'Learning',
     'chunk-time': 'Active',
-    'chunk-fall-out': 'With help',
+    'chunk-fall-out': 'Learning',
     'chunk-argue': 'Learning',
     'chunk-support': 'Active',
     'chunk-get-along': 'Learning',

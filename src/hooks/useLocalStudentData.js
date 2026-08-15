@@ -22,11 +22,13 @@ export function useLocalStudentData(studentId) {
   )
 
   const updateChunkStatus = (chunkId, status) => {
+    const normalizedStatus = status === 'With help' ? 'Learning' : status
+
     saveStudentData({
       ...studentData,
       chunkProgress: {
         ...studentData.chunkProgress,
-        [chunkId]: status,
+        [chunkId]: normalizedStatus,
       },
     })
   }
@@ -417,17 +419,31 @@ export function useLocalStudentData(studentId) {
     })
   }
 
-  const addRevisionItem = ({ materialId, sourceId, sourceType, taskType, title }) => {
+  const addRevisionItem = ({
+    chunkId,
+    example,
+    materialId,
+    meaning,
+    sourceId,
+    sourceType,
+    taskType,
+    text,
+    title,
+  }) => {
     saveStudentData({
       ...studentData,
       revision: upsertRevisionItem(
         studentData.revision,
         createRevisionItem({
+          chunkId,
+          example,
           materialId,
+          meaning,
           sourceId,
           sourceType,
           studentId,
           taskType,
+          text,
           title,
         }),
       ),
@@ -483,17 +499,35 @@ export function useLocalStudentData(studentId) {
   }
 }
 
-function createRevisionItem({ materialId, sourceId, sourceType, studentId, taskType, title }) {
+function createRevisionItem({
+  chunkId,
+  example,
+  materialId,
+  meaning,
+  sourceId,
+  sourceType,
+  studentId,
+  taskType,
+  text,
+  title,
+}) {
+  const createdAt = new Date().toISOString()
+
   return {
     id: `revision-${sourceType.toLowerCase()}-${sourceId}`,
     studentId,
     materialId,
     sourceType,
     sourceId,
+    chunkId,
     taskType,
     topicId: 'family',
-    title,
-    addedAt: new Date().toISOString(),
+    title: title ?? text,
+    text,
+    meaning,
+    example,
+    createdAt,
+    addedAt: createdAt,
     lastPractisedAt: null,
     status: 'Due',
   }

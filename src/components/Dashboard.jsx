@@ -15,10 +15,12 @@ export function Dashboard({ featureCards, studentData }) {
   const activeChunks = familyChunks
     .map((chunk) => ({
       phrase: chunk.chunk,
-      status: studentData.chunkProgress[chunk.id] ?? 'New',
+      status: studentData.chunkProgress[chunk.id] === 'With help'
+        ? 'Learning'
+        : studentData.chunkProgress[chunk.id] ?? 'New',
     }))
     .filter((chunk) =>
-      ['Active', 'With help', 'Learning'].includes(chunk.status),
+      ['Active', 'Learning'].includes(chunk.status),
     )
     .slice(0, 5)
 
